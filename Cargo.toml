@@ -45,11 +45,12 @@
     sha2 = "0.11"
     pbkdf2 = { version = "0.13", features = ["phc", "getrandom"] }
     jsonwebtoken = { version = "10.4", features = ["rust_crypto"] }
-    rustls = { version = "0.23", default-features = false, features = [
+    rustls = { version = "0.23.44", default-features = false, features = [
       "logging",
       "std",
       "tls12",
-      "ring",
+      "aws_lc_rs",
+      "prefer-post-quantum",
     ] }
     rustls-native-certs = "0.8"
     rustls-pemfile = "2.2"

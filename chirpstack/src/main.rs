@@ -105,6 +105,11 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // aws-lc-rs: X25519MLKEM768 first and ML-DSA certificates (rustls >= 0.23.44); ring is still linked
+    // through reqwest and lapin, so the process default is chosen here
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("install the aws-lc-rs crypto provider");
     let cli = Cli::parse();
     config::load(Path::new(&cli.config))?;
 
