@@ -1,13 +1,14 @@
 #[cfg(feature = "crypto")]
 use aes::{
-    Aes128, Block,
-    cipher::{BlockCipherDecrypt, BlockCipherEncrypt, KeyInit, array::Array},
+    Aes256, Block,
+    cipher::{BlockCipherDecrypt, KeyInit, array::Array},
 };
 use anyhow::Result;
 
 use crate::applayer::PayloadCodec;
 use crate::helpers::{decode_freq, encode_freq};
-use crate::{AES128Key, DevAddr};
+use crate::keys::kdf;
+use crate::{AES256Key, DevAddr};
 
 pub enum Cid {
     PackageVersionReq,
@@ -299,15 +300,15 @@ pub struct McGroupStatusAnsPayloadItem {
 pub struct McGroupSetupReqPayload {
     pub mc_group_id_header: McGroupSetupReqPayloadMcGroupIdHeader,
     pub mc_addr: DevAddr,
-    pub mc_key_encrypted: [u8; 16],
+    pub mc_key_encrypted: [u8; 32],
     pub min_mc_f_count: u32,
     pub max_mc_f_count: u32,
 }
 
 impl PayloadCodec for McGroupSetupReqPayload {
     fn decode(b: &[u8]) -> Result<Self> {
-        if b.len() != 29 {
-            return Err(anyhow!("Expected 29 bytes"));
+        if b.len() != 45 {
+            return Err(anyhow!("Expected 45 bytes"));
         }
 
         Ok(McGroupSetupReqPayload {
@@ -320,18 +321,18 @@ impl PayloadCodec for McGroupSetupReqPayload {
                 DevAddr::from_le_bytes(mc_addr)
             },
             mc_key_encrypted: {
-                let mut mc_key_encrypted = [0; 16];
-                mc_key_encrypted.copy_from_slice(&b[5..21]);
+                let mut mc_key_encrypted = [0; 32];
+                mc_key_encrypted.copy_from_slice(&b[5..37]);
                 mc_key_encrypted
             },
             min_mc_f_count: {
                 let mut f_count = [0; 4];
-                f_count.copy_from_slice(&b[21..25]);
+                f_count.copy_from_slice(&b[37..41]);
                 u32::from_le_bytes(f_count)
             },
             max_mc_f_count: {
                 let mut f_count = [0; 4];
-                f_count.copy_from_slice(&b[25..29]);
+                f_count.copy_from_slice(&b[41..45]);
                 u32::from_le_bytes(f_count)
             },
         })
@@ -342,7 +343,7 @@ impl PayloadCodec for McGroupSetupReqPayload {
             return Err(anyhow!("Max mc_group_id value is 3"));
         }
 
-        let mut b = Vec::with_capacity(29);
+        let mut b = Vec::with_capacity(45);
         b.push(self.mc_group_id_header.mc_group_id);
         b.extend_from_slice(&self.mc_addr.to_le_bytes());
         b.extend_from_slice(&self.mc_key_encrypted);
@@ -743,52 +744,47 @@ impl PayloadCodec for McClassBSessionAnsPayload {
     }
 }
 
-pub fn get_mc_root_key_for_gen_app_key(gen_app_key: AES128Key) -> Result<AES128Key> {
+pub fn get_mc_root_key_for_gen_app_key(gen_app_key: AES256Key) -> Result<AES256Key> {
     get_key(gen_app_key, [0; 16])
 }
 
-pub fn get_mc_root_key_for_app_key(app_key: AES128Key) -> Result<AES128Key> {
+pub fn get_mc_root_key_for_app_key(app_key: AES256Key) -> Result<AES256Key> {
     get_key(app_key, [0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 }
 
-pub fn get_mc_ke_key(mc_root_key: AES128Key) -> Result<AES128Key> {
+pub fn get_mc_ke_key(mc_root_key: AES256Key) -> Result<AES256Key> {
     get_key(mc_root_key, [0; 16])
 }
 
-pub fn get_mc_app_s_key(mc_key: AES128Key, mc_addr: DevAddr) -> Result<AES128Key> {
+pub fn get_mc_app_s_key(mc_key: AES256Key, mc_addr: DevAddr) -> Result<AES256Key> {
     let mut b = [0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     b[1..5].copy_from_slice(&mc_addr.to_le_bytes());
     get_key(mc_key, b)
 }
 
-pub fn get_mc_net_s_key(mc_key: AES128Key, mc_addr: DevAddr) -> Result<AES128Key> {
+pub fn get_mc_net_s_key(mc_key: AES256Key, mc_addr: DevAddr) -> Result<AES256Key> {
     let mut b = [0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     b[1..5].copy_from_slice(&mc_addr.to_le_bytes());
     get_key(mc_key, b)
 }
 
-pub fn encrypt_mc_key(mc_ke_key: AES128Key, mc_key: AES128Key) -> [u8; 16] {
-    let mc_ke_key_bytes = mc_ke_key.to_bytes();
-    let mc_key_bytes = mc_key.to_bytes();
+/// The 32-byte McKey is two AES blocks, each decrypted with McKEKey (one block in the spec's 16-byte McKey).
+pub fn encrypt_mc_key(mc_ke_key: AES256Key, mc_key: AES256Key) -> [u8; 32] {
+    let key = Array::from(mc_ke_key.to_bytes());
+    let cipher = Aes256::new(&key);
 
-    let key = Array::from(mc_ke_key_bytes);
-    let cipher = Aes128::new(&key);
+    let mut out = mc_key.to_bytes();
+    for half in out.chunks_exact_mut(16) {
+        let mut block = Block::try_from(&*half).unwrap();
+        cipher.decrypt_block(&mut block);
+        half.copy_from_slice(&block);
+    }
 
-    let mut block = Block::from(mc_key_bytes);
-    cipher.decrypt_block(&mut block);
-
-    block.into()
+    out
 }
 
-fn get_key(key: AES128Key, b: [u8; 16]) -> Result<AES128Key> {
-    let key_bytes = key.to_bytes();
-    let key = Array::from(key_bytes);
-    let cipher = Aes128::new(&key);
-
-    let mut block = Block::from(b);
-    cipher.encrypt_block(&mut block);
-
-    Ok(AES128Key::from_slice(&block)?)
+fn get_key(key: AES256Key, b: [u8; 16]) -> Result<AES256Key> {
+    Ok(kdf(&key, &b))
 }
 
 #[cfg(test)]
@@ -947,14 +943,18 @@ mod test {
             command: Payload::McGroupSetupReq(McGroupSetupReqPayload {
                 mc_group_id_header: McGroupSetupReqPayloadMcGroupIdHeader { mc_group_id: 2 },
                 mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-                mc_key_encrypted: [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                mc_key_encrypted: [
+                    1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2,
+                    3, 4, 5, 6, 7, 8,
+                ],
                 min_mc_f_count: 1024,
                 max_mc_f_count: 2048,
             }),
             bytes: vec![
                 0x02, 0x02, 0x04, 0x03, 0x02, 0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00, 0x08,
-                0x00, 0x00,
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+                0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x04, 0x00, 0x00,
+                0x00, 0x08, 0x00, 0x00,
             ],
             expected_error: None,
         }];
@@ -965,14 +965,18 @@ mod test {
             command: Payload::McGroupSetupReq(McGroupSetupReqPayload {
                 mc_group_id_header: McGroupSetupReqPayloadMcGroupIdHeader { mc_group_id: 2 },
                 mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-                mc_key_encrypted: [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                mc_key_encrypted: [
+                    1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2,
+                    3, 4, 5, 6, 7, 8,
+                ],
                 min_mc_f_count: 1024,
                 max_mc_f_count: 2048,
             }),
             bytes: vec![
                 0x02, 0x02, 0x04, 0x03, 0x02, 0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x04, 0x00, 0x00, 0x00, 0x08,
-                0x00, 0x00,
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+                0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x04, 0x00, 0x00,
+                0x00, 0x08, 0x00, 0x00,
             ],
             expected_error: None,
         }];
@@ -1298,18 +1302,31 @@ mod test {
     }
 
     const MC_ADDR: [u8; 4] = [1, 2, 3, 4];
-    const MC_KEY: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    const APP_KEY: [u8; 16] = [2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    const GEN_APP_KEY: [u8; 16] = [3, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    const MC_ROOT_KEY: [u8; 16] = [4, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+    const MC_KEY: [u8; 32] = [
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32,
+    ];
+    const APP_KEY: [u8; 32] = [
+        2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32,
+    ];
+    const GEN_APP_KEY: [u8; 32] = [
+        3, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32,
+    ];
+    const MC_ROOT_KEY: [u8; 32] = [
+        4, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32,
+    ];
 
     #[test]
     fn test_get_mc_root_key_for_gen_app_key() {
-        let key = get_mc_root_key_for_gen_app_key(AES128Key::from_bytes(GEN_APP_KEY)).unwrap();
+        let key = get_mc_root_key_for_gen_app_key(AES256Key::from_bytes(GEN_APP_KEY)).unwrap();
         assert_eq!(
-            AES128Key::from_bytes([
-                0x55, 0x34, 0x4e, 0x82, 0x57, 0xe, 0xae, 0xc8, 0xbf, 0x3, 0xb9, 0x99, 0x62, 0xd1,
-                0xf4, 0x45
+            AES256Key::from_bytes([
+                0x2b, 0x86, 0xc7, 0xf3, 0xfb, 0x99, 0x97, 0xe4, 0xd5, 0x1b, 0x1a, 0x36, 0xa1, 0xe3,
+                0x9f, 0xcd, 0xd2, 0x82, 0xe5, 0x30, 0x14, 0x10, 0xc2, 0xc2, 0xf7, 0x26, 0x49, 0x2e,
+                0xfd, 0x05, 0xab, 0xec
             ]),
             key
         )
@@ -1317,11 +1334,12 @@ mod test {
 
     #[test]
     fn test_get_mc_root_key_for_app_key() {
-        let key = get_mc_root_key_for_app_key(AES128Key::from_bytes(APP_KEY)).unwrap();
+        let key = get_mc_root_key_for_app_key(AES256Key::from_bytes(APP_KEY)).unwrap();
         assert_eq!(
-            AES128Key::from_bytes([
-                0x26, 0x4f, 0xd8, 0x59, 0x58, 0x3f, 0xcc, 0x67, 0x2, 0x41, 0xac, 0x7, 0x1c, 0xc9,
-                0xf5, 0xbb
+            AES256Key::from_bytes([
+                0x74, 0x0a, 0x80, 0x74, 0xbb, 0xd8, 0x89, 0x5d, 0x4d, 0x3c, 0xe1, 0x82, 0x74, 0x73,
+                0xca, 0x4f, 0x02, 0x03, 0xd1, 0x77, 0xd7, 0x97, 0x37, 0x39, 0xaf, 0xea, 0xc7, 0xc3,
+                0x32, 0x28, 0x1f, 0x18
             ]),
             key
         );
@@ -1329,11 +1347,12 @@ mod test {
 
     #[test]
     fn test_get_mc_ke_key() {
-        let key = get_mc_ke_key(AES128Key::from_bytes(MC_ROOT_KEY)).unwrap();
+        let key = get_mc_ke_key(AES256Key::from_bytes(MC_ROOT_KEY)).unwrap();
         assert_eq!(
-            AES128Key::from_bytes([
-                0x90, 0x83, 0xbe, 0xbf, 0x70, 0x42, 0x57, 0x88, 0x31, 0x60, 0xdb, 0xfc, 0xde, 0x33,
-                0xad, 0x71
+            AES256Key::from_bytes([
+                0x7c, 0xde, 0x79, 0x50, 0x78, 0x46, 0x06, 0x8d, 0x6d, 0xb0, 0xa7, 0xec, 0x61, 0x70,
+                0xdc, 0x32, 0x17, 0x2d, 0x2c, 0x63, 0x21, 0x27, 0x79, 0x6a, 0xa3, 0xe3, 0x8b, 0xb2,
+                0x45, 0x21, 0xcd, 0xcd
             ]),
             key
         );
@@ -1342,14 +1361,15 @@ mod test {
     #[test]
     fn test_get_mc_app_key() {
         let key = get_mc_app_s_key(
-            AES128Key::from_bytes(MC_KEY),
+            AES256Key::from_bytes(MC_KEY),
             DevAddr::from_be_bytes(MC_ADDR),
         )
         .unwrap();
         assert_eq!(
-            AES128Key::from_bytes([
-                0x95, 0xcb, 0x45, 0x18, 0xee, 0x37, 0x56, 0x6, 0x73, 0x5b, 0xba, 0xcb, 0xdc, 0xe8,
-                0x37, 0xfa
+            AES256Key::from_bytes([
+                0xb5, 0x5f, 0x29, 0xdc, 0xce, 0xcd, 0x3f, 0x87, 0xee, 0xd6, 0xaa, 0xd5, 0xf8, 0xe6,
+                0x29, 0xcc, 0xc2, 0x32, 0x3b, 0x5f, 0x07, 0xc8, 0xae, 0xab, 0x48, 0xe2, 0xdd, 0x73,
+                0x4f, 0x3f, 0x1e, 0x73
             ]),
             key
         );
@@ -1358,14 +1378,15 @@ mod test {
     #[test]
     fn test_get_mc_net_s_key() {
         let key = get_mc_net_s_key(
-            AES128Key::from_bytes(MC_KEY),
+            AES256Key::from_bytes(MC_KEY),
             DevAddr::from_be_bytes(MC_ADDR),
         )
         .unwrap();
         assert_eq!(
-            AES128Key::from_bytes([
-                0xc3, 0xf6, 0xb3, 0x88, 0xba, 0xd6, 0xc0, 0x0, 0xb2, 0x32, 0x91, 0xad, 0x52, 0xc1,
-                0x1c, 0x7b
+            AES256Key::from_bytes([
+                0x2b, 0x54, 0xff, 0x9d, 0x73, 0xe4, 0xa2, 0xdb, 0x64, 0xd6, 0xe9, 0x01, 0x24, 0xa9,
+                0xba, 0xd7, 0x84, 0x31, 0x43, 0xc7, 0x34, 0x61, 0xef, 0xd7, 0x4f, 0xad, 0xbb, 0x4b,
+                0x07, 0xa4, 0x02, 0x7d
             ]),
             key
         );
@@ -1373,12 +1394,14 @@ mod test {
 
     #[test]
     fn test_encrypt_mc_key() {
-        let ke_key = AES128Key::from_bytes([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
-        let mc_key = AES128Key::from_bytes([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]);
+        let ke_key = AES256Key::from_bytes([1; 32]);
+        let mc_key = AES256Key::from_bytes([2; 32]);
 
         assert_eq!(
             [
-                52, 55, 214, 226, 49, 215, 2, 65, 155, 81, 180, 148, 114, 113, 182, 17
+                0xc0, 0x4b, 0x27, 0x90, 0x1a, 0x50, 0xcf, 0xfa, 0xf1, 0xbb, 0x88, 0x9f, 0xc0, 0x92,
+                0x5e, 0x14, 0xc0, 0x4b, 0x27, 0x90, 0x1a, 0x50, 0xcf, 0xfa, 0xf1, 0xbb, 0x88, 0x9f,
+                0xc0, 0x92, 0x5e, 0x14
             ],
             encrypt_mc_key(ke_key, mc_key)
         );

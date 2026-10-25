@@ -103,12 +103,24 @@ async fn test_uplink() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -148,7 +160,7 @@ async fn test_uplink() {
                 f_port: None,
                 frm_payload: None,
             }),
-            mic: Some([241, 100, 207, 79]),
+            mic: Some([157, 17, 37, 248]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 9),
@@ -193,7 +205,7 @@ async fn test_uplink() {
                 f_port: None,
                 frm_payload: None,
             }),
-            mic: Some([137, 180, 12, 148]),
+            mic: Some([128, 16, 163, 180]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 9),
@@ -261,12 +273,24 @@ async fn test_downlink_scheduler() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -310,7 +334,7 @@ async fn test_downlink_scheduler() {
             assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![96, 4, 3, 2, 1, 128, 5, 0, 10, 115, 46, 73, 41, 113, 46, 49],
+                    phy_payload: vec![96, 4, 3, 2, 1, 128, 5, 0, 10, 99, 16, 57, 115, 30, 223, 220],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 868300000,
@@ -396,9 +420,7 @@ async fn test_downlink_scheduler() {
             assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![
-                        96, 4, 3, 2, 1, 144, 5, 0, 10, 115, 46, 73, 218, 230, 215, 91,
-                    ],
+                    phy_payload: vec![96, 4, 3, 2, 1, 144, 5, 0, 10, 99, 16, 57, 71, 40, 191, 252],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 868300000,

@@ -30,9 +30,12 @@ pub async fn prepare<'a>() -> std::sync::MutexGuard<'a, ()> {
     // of the function running the tests.
     let guard = TEST_MUX.lock().unwrap();
 
-    // Set logger
+    // Set logger, and the TLS crypto provider that main() installs
     TRACING_INIT.call_once(|| {
         tracing_subscriber::fmt::init();
+        rustls::crypto::aws_lc_rs::default_provider()
+            .install_default()
+            .expect("install the aws-lc-rs crypto provider");
     });
 
     // set test config

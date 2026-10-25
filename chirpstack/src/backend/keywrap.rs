@@ -3,12 +3,12 @@ use tracing::trace;
 
 use crate::config;
 use backend::KeyEnvelope;
-use lrwn::AES128Key;
+use lrwn::AES256Key;
 
-pub fn unwrap(ke: &KeyEnvelope) -> Result<AES128Key> {
+pub fn unwrap(ke: &KeyEnvelope) -> Result<AES256Key> {
     // Nothing to unwrap
     if ke.kek_label.is_empty() {
-        return Ok(AES128Key::from_slice(&ke.aes_key)?);
+        return Ok(AES256Key::from_slice(&ke.aes_key)?);
     }
 
     trace!(kek_label = %ke.kek_label, "Unwrapping AES key");
@@ -17,14 +17,14 @@ pub fn unwrap(ke: &KeyEnvelope) -> Result<AES128Key> {
     for kek in &conf.keks {
         if kek.label == ke.kek_label {
             let key = ke.unwrap(&kek.kek.to_bytes())?;
-            return Ok(AES128Key::from_bytes(key));
+            return Ok(AES256Key::from_bytes(key));
         }
     }
 
     Err(anyhow!("KEK label {} does not exist", ke.kek_label))
 }
 
-pub fn wrap(label: &str, key: AES128Key) -> Result<KeyEnvelope> {
+pub fn wrap(label: &str, key: AES256Key) -> Result<KeyEnvelope> {
     if label.is_empty() {
         return KeyEnvelope::new("", None, &key.to_bytes());
     }

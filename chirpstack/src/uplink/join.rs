@@ -6,7 +6,7 @@ use chrono::{DateTime, Local, Utc};
 use tracing::{Instrument, Level, error, info, span, trace, warn};
 
 use lrwn::{
-    AES128Key, CFList, DLSettings, FType, JoinAcceptPayload, JoinRequestPayload, JoinType, MHDR,
+    AES256Key, CFList, DLSettings, FType, JoinAcceptPayload, JoinRequestPayload, JoinType, MHDR,
     Major, Payload, PhyPayload, keys,
 };
 
@@ -42,9 +42,9 @@ pub struct JoinRequest {
     device_keys: Option<device_keys::DeviceKeys>,
     device_info: Option<integration_pb::DeviceInfo>,
     relay_rx_info: Option<integration_pb::UplinkRelayRxInfo>,
-    f_nwk_s_int_key: Option<AES128Key>,
-    s_nwk_s_int_key: Option<AES128Key>,
-    nwk_s_enc_key: Option<AES128Key>,
+    f_nwk_s_int_key: Option<AES256Key>,
+    s_nwk_s_int_key: Option<AES256Key>,
+    nwk_s_enc_key: Option<AES256Key>,
     app_s_key: Option<common::KeyEnvelope>,
     js_session_key_id: Vec<u8>,
 }

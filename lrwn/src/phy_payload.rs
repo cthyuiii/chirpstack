@@ -1,6 +1,6 @@
 #[cfg(feature = "crypto")]
 use aes::{
-    Aes128, Block,
+    Aes256, Block,
     cipher::{BlockCipherDecrypt, BlockCipherEncrypt, KeyInit, array::Array},
 };
 use anyhow::Result;
@@ -8,13 +8,15 @@ use anyhow::Result;
 use cmac::{Cmac, Mac};
 #[cfg(feature = "serde")]
 use serde::Serialize;
+#[cfg(feature = "crypto")]
+use subtle::ConstantTimeEq;
 
 use super::maccommand::{MACCommand, MACCommandSet};
 use super::mhdr::{FType, MHDR};
 use super::payload::{FRMPayload, MACPayload, Payload};
 #[cfg(feature = "crypto")]
 use super::{
-    aes128::AES128Key,
+    aes256::AES256Key,
     devaddr::DevAddr,
     eui64::EUI64,
     payload::{JoinAcceptPayload, JoinType},
@@ -36,7 +38,7 @@ pub enum MACVersion {
 /// use std::str::FromStr;
 /// use lrwn::*;
 ///
-/// let app_key = AES128Key::from_str("0102030405060708090a0b0c0d0e0f10").unwrap();
+/// let app_key = AES256Key::from_str("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
 ///
 /// let mut phy = PhyPayload {
 ///     mhdr: MHDR {
@@ -52,10 +54,10 @@ pub enum MACVersion {
 /// };
 ///
 /// phy.set_join_request_mic(&app_key).unwrap();
-/// assert_eq!([0x9, 0xb9, 0x7b, 0x32], phy.mic.unwrap());
+/// assert_eq!([0x88, 0xca, 0x8a, 0x59], phy.mic.unwrap());
 ///
 /// let bytes = phy.to_vec().unwrap();
-/// assert_eq!(vec![0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x09, 0xb9, 0x7b, 0x32], bytes);
+/// assert_eq!(vec![0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x88, 0xca, 0x8a, 0x59], bytes);
 ///
 /// let phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// assert_eq!(phy, phy_decoded);
@@ -67,7 +69,7 @@ pub enum MACVersion {
 /// use std::str::FromStr;
 /// use lrwn::*;
 ///
-/// let app_key = AES128Key::from_str("0102030405060708090a0b0c0d0e0f10").unwrap();
+/// let app_key = AES256Key::from_str("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
 /// let join_eui = EUI64::from_str("0807060504030201").unwrap();
 /// let dev_nonce = 258;
 ///
@@ -92,12 +94,12 @@ pub enum MACVersion {
 /// };
 ///
 /// phy.set_join_accept_mic(JoinType::Join, &join_eui, dev_nonce, &app_key).unwrap();
-/// assert_eq!([0x34, 0x49, 0xf2, 0x12], phy.mic.unwrap());
+/// assert_eq!([0x60, 0x69, 0x10, 0x38], phy.mic.unwrap());
 ///
 /// phy.encrypt_join_accept_payload(&app_key).unwrap();
 ///
 /// let bytes = phy.to_vec().unwrap();
-/// assert_eq!(vec![0x20, 0x23, 0xcf, 0x33, 0x54, 0x89, 0xaa, 0xe3, 0x18, 0x3c, 0x0b, 0xe0, 0xba, 0xa8, 0xde, 0xe5, 0xf3], bytes);
+/// assert_eq!(vec![0x20, 0xe2, 0x3b, 0x04, 0xff, 0x92, 0x2b, 0x95, 0x53, 0x6c, 0xa7, 0xf9, 0xb6, 0x78, 0xea, 0x0d, 0xab], bytes);
 ///
 /// let mut phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// phy_decoded.decrypt_join_accept_payload(&app_key).unwrap();
@@ -120,7 +122,7 @@ pub enum MACVersion {
 ///         cflist: None,
 ///         rx_delay: 0,
 ///     }),
-///     mic: Some([0x34, 0x49, 0xf2, 0x12]),
+///     mic: Some([0x60, 0x69, 0x10, 0x38]),
 /// }, phy_decoded);
 /// ```
 ///
@@ -129,7 +131,7 @@ pub enum MACVersion {
 /// use std::str::FromStr;
 /// use lrwn::*;
 ///
-/// let app_key = AES128Key::from_str("0102030405060708090a0b0c0d0e0f10").unwrap();
+/// let app_key = AES256Key::from_str("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
 /// let join_eui = EUI64::from_str("0807060504030201").unwrap();
 /// let dev_nonce = 258;
 ///
@@ -154,12 +156,12 @@ pub enum MACVersion {
 /// };
 ///
 /// phy.set_join_accept_mic(JoinType::Join, &join_eui, dev_nonce, &app_key).unwrap();
-/// assert_eq!([0x93, 0xff, 0x9a, 0x3a], phy.mic.unwrap());
+/// assert_eq!([0xdb, 0xae, 0x0a, 0x0b], phy.mic.unwrap());
 ///
 /// phy.encrypt_join_accept_payload(&app_key).unwrap();
 ///
 /// let bytes = phy.to_vec().unwrap();
-/// assert_eq!(vec![0x20, 0x7a, 0xbe, 0xea, 0x06, 0xb0, 0x29, 0x20, 0xf1, 0x1c, 0x02, 0xd0, 0x34, 0x8f, 0xcf, 0x18, 0x15], bytes);
+/// assert_eq!(vec![0x20, 0x74, 0xc5, 0xa2, 0x1d, 0x3e, 0x0d, 0xf4, 0x27, 0xb5, 0x25, 0xb7, 0xd2, 0x1c, 0xef, 0xea, 0x32], bytes);
 ///
 /// let mut phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// phy_decoded.decrypt_join_accept_payload(&app_key).unwrap();
@@ -182,7 +184,7 @@ pub enum MACVersion {
 ///         cflist: None,
 ///         rx_delay: 0,
 ///     }),
-///     mic: Some([0x93, 0xff, 0x9a, 0x3a]),
+///     mic: Some([0xdb, 0xae, 0x0a, 0x0b]),
 /// }, phy_decoded);
 /// ```
 ///
@@ -191,8 +193,8 @@ pub enum MACVersion {
 /// use std::str::FromStr;
 /// use lrwn::*;
 ///
-/// let nwk_s_key = AES128Key::from_str("0102030405060708090a0b0c0d0e0f10").unwrap();
-/// let app_s_key = AES128Key::from_str("100f0e0d0c0b0a090807060504030201").unwrap();
+/// let nwk_s_key = AES256Key::from_str("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
+/// let app_s_key = AES256Key::from_str("201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a090807060504030201").unwrap();
 ///
 /// let mut phy = PhyPayload {
 ///     mhdr: MHDR {
@@ -221,7 +223,7 @@ pub enum MACVersion {
 /// phy.set_uplink_data_mic(MACVersion::LoRaWAN1_0, 0, 0, 0, &nwk_s_key, &nwk_s_key);
 ///
 /// let bytes = phy.to_vec().unwrap();
-/// assert_eq!(vec![0x80, 0x04, 0x03, 0x02, 0x01, 0x03, 0x00, 0x00, 0x06, 0x73, 0x07, 0x0a, 0xe2, 0x64, 0xd4, 0xf7, 0xe1, 0x17, 0xd2, 0xc0], bytes);
+/// assert_eq!(vec![0x80, 0x04, 0x03, 0x02, 0x01, 0x03, 0x00, 0x00, 0x06, 0x73, 0x07, 0x0a, 0x4e, 0xab, 0x38, 0x1c, 0x01, 0x3f, 0x67, 0xfc], bytes);
 ///
 /// let mut phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// assert_eq!(true, phy_decoded.validate_uplink_data_mic(MACVersion::LoRaWAN1_0, 0, 0, 0, &nwk_s_key, &nwk_s_key).unwrap());
@@ -244,9 +246,9 @@ pub enum MACVersion {
 /// use std::str::FromStr;
 /// use lrwn::*;
 ///
-/// let s_nwk_s_int_key = AES128Key::from_str("01010101010101010101010101010100").unwrap();
-/// let nwk_s_enc_key = AES128Key::from_str("01010101010101010101010101010200").unwrap();
-/// let app_s_key = AES128Key::from_str("100f0e0d0c0b0a090807060504030201").unwrap();
+/// let s_nwk_s_int_key = AES256Key::from_str("0101010101010101010101010101010101010101010101010101010101010100").unwrap();
+/// let nwk_s_enc_key = AES256Key::from_str("0101010101010101010101010101010101010101010101010101010101010200").unwrap();
+/// let app_s_key = AES256Key::from_str("201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a090807060504030201").unwrap();
 ///
 /// let mut phy = PhyPayload {
 ///     mhdr: MHDR{
@@ -276,7 +278,7 @@ pub enum MACVersion {
 /// phy.set_downlink_data_mic(MACVersion::LoRaWAN1_1, 0, &s_nwk_s_int_key).unwrap();
 ///
 /// let bytes = phy.to_vec().unwrap();
-/// assert_eq!(vec![0x60, 0x04, 0x03, 0x02, 0x01, 0x03, 0x00, 0x00, 0x22, 0xac, 0x0a, 0x01, 0xf0, 0xb4, 0x68, 0xdd, 0xaa, 0x5e, 0xd1, 0x3a], bytes);
+/// assert_eq!(vec![0x60, 0x04, 0x03, 0x02, 0x01, 0x03, 0x00, 0x00, 0xb0, 0x85, 0x89, 0x01, 0x74, 0x1d, 0x83, 0x88, 0x12, 0xc9, 0xa9, 0x58], bytes);
 ///
 /// let mut phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// assert_eq!(true, phy_decoded.validate_downlink_data_mic(MACVersion::LoRaWAN1_1, 0, &s_nwk_s_int_key).unwrap());
@@ -329,7 +331,7 @@ pub enum MACVersion {
 /// use lrwn::*;
 ///
 /// // Payload from the end-device.
-/// let ed_app_key = AES128Key::from_str("01020304050607080102030405060708").unwrap();
+/// let ed_app_key = AES256Key::from_str("0102030405060708010203040506070801020304050607080102030405060708").unwrap();
 /// let mut ed_phy = PhyPayload {
 ///     mhdr: MHDR {
 ///         f_type: FType::JoinRequest,
@@ -346,7 +348,7 @@ pub enum MACVersion {
 /// ed_phy.set_join_request_mic(&ed_app_key).unwrap();
 ///
 /// // Relay ForwardUplinkReq (which will forward the end-device payload).
-/// let relay_nwk_s_key = AES128Key::from_str("08070605040302010807060504030201").unwrap();
+/// let relay_nwk_s_key = AES256Key::from_str("0807060504030201080706050403020108070605040302010807060504030201").unwrap();
 /// let mut relay_phy = PhyPayload {
 ///     mhdr: MHDR {
 ///         f_type: FType::UnconfirmedDataUp,
@@ -376,7 +378,7 @@ pub enum MACVersion {
 /// relay_phy.set_uplink_data_mic(MACVersion::LoRaWAN1_0, 0, 0, 0, &relay_nwk_s_key, &relay_nwk_s_key);
 ///
 /// let bytes = relay_phy.to_vec().unwrap();
-/// assert_eq!(vec![0x40, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x00, 0xe2, 0x2f, 0x68, 0xf4, 0xa5, 0x0a, 0xdf, 0xfb, 0x64, 0xef, 0x37, 0x91, 0x0f, 0x14, 0x6a, 0x6c, 0x2b, 0xda, 0x4f, 0x7e, 0x2d, 0xb9, 0x6a, 0xc8, 0x99, 0xa8, 0xa4, 0x72, 0x7d, 0x0a, 0xbd, 0xc9, 0xae, 0x51], bytes);
+/// assert_eq!(vec![0x40, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x00, 0xe2, 0xf1, 0x59, 0x70, 0x83, 0xb1, 0xf9, 0xbc, 0xc5, 0x9d, 0x46, 0x14, 0xa0, 0x6a, 0x02, 0xf1, 0x43, 0xac, 0x97, 0x3a, 0xe3, 0x9b, 0x74, 0xc9, 0x34, 0x72, 0x43, 0x12, 0xb3, 0xd3, 0xa4, 0xaf, 0x48, 0x6e], bytes);
 ///
 /// let mut relay_phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// assert_eq!(relay_phy, relay_phy_decoded);
@@ -405,7 +407,7 @@ pub enum MACVersion {
 ///             payload: Box::new(ed_phy),
 ///         })),
 ///     }),
-///     mic: Some([0xbd, 0xc9, 0xae, 0x51]),
+///     mic: Some([0xa4, 0xaf, 0x48, 0x6e]),
 /// }, relay_phy_decoded);
 /// ```
 ///
@@ -415,7 +417,7 @@ pub enum MACVersion {
 /// use lrwn::*;
 ///
 /// // Payload for the end-device.
-/// let ed_app_key = AES128Key::from_str("0102030405060708090a0b0c0d0e0f10").unwrap();
+/// let ed_app_key = AES256Key::from_str("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
 /// let ed_join_eui = EUI64::from_str("0807060504030201").unwrap();
 /// let ed_dev_nonce = 258;
 /// let mut ed_phy = PhyPayload {
@@ -442,7 +444,7 @@ pub enum MACVersion {
 /// ed_phy.encrypt_join_accept_payload(&ed_app_key).unwrap();
 ///
 /// // Payload for the Relay containing the ForwardDownlinkReq.
-/// let relay_nwk_s_key = AES128Key::from_str("08070605040302010807060504030201").unwrap();
+/// let relay_nwk_s_key = AES256Key::from_str("0807060504030201080706050403020108070605040302010807060504030201").unwrap();
 /// let mut relay_phy = PhyPayload {
 ///     mhdr: MHDR {
 ///         f_type: FType::UnconfirmedDataDown,
@@ -465,7 +467,7 @@ pub enum MACVersion {
 /// relay_phy.set_downlink_data_mic(MACVersion::LoRaWAN1_0, 0, &relay_nwk_s_key).unwrap();
 ///
 /// let bytes = relay_phy.to_vec().unwrap();
-/// assert_eq!(vec![0x60, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x00, 0xe2, 0xc9, 0x60, 0x41, 0x64, 0xc9, 0x7d, 0x76, 0xf9, 0xea, 0x8e, 0x1a, 0x79, 0x2b, 0xa0, 0x87, 0x9b, 0x85, 0x24, 0x3e, 0x5a, 0xf5], bytes);
+/// assert_eq!(vec![0x60, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0a, 0x00, 0xe2, 0x16, 0x85, 0xd3, 0xe0, 0xa3, 0x1d, 0x2e, 0x6b, 0xdb, 0x4a, 0x35, 0x8d, 0x86, 0x71, 0x29, 0x40, 0x74, 0xbc, 0x2b, 0x93, 0xe9], bytes);
 ///
 /// let mut relay_phy_decoded = PhyPayload::from_slice(&bytes).unwrap();
 /// assert_eq!(relay_phy, relay_phy_decoded);
@@ -487,7 +489,7 @@ pub enum MACVersion {
 ///             payload: Box::new(ed_phy),
 ///         })),
 ///     }),
-///     mic: Some([0x24, 0x3e, 0x5a, 0xf5]),
+///     mic: Some([0xbc, 0x2b, 0x93, 0xe9]),
 /// }, relay_phy_decoded);
 /// ```
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -562,8 +564,8 @@ impl PhyPayload {
         conf_f_cnt: u32,
         tx_dr: u8,
         tx_ch: u8,
-        f_nwk_s_int_key: &AES128Key,
-        s_nwk_s_int_key: &AES128Key,
+        f_nwk_s_int_key: &AES256Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<()> {
         self.mic = Some(self.calculate_uplink_data_mic(
             mac_version,
@@ -588,19 +590,19 @@ impl PhyPayload {
         conf_f_cnt: u32,
         tx_dr: u8,
         tx_ch: u8,
-        f_nwk_s_int_key: &AES128Key,
-        s_nwk_s_int_key: &AES128Key,
+        f_nwk_s_int_key: &AES256Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<bool> {
         if let Some(mic) = self.mic {
-            return Ok(mic
-                == self.calculate_uplink_data_mic(
-                    mac_version,
-                    conf_f_cnt,
-                    tx_dr,
-                    tx_ch,
-                    f_nwk_s_int_key,
-                    s_nwk_s_int_key,
-                )?);
+            let calculated = self.calculate_uplink_data_mic(
+                mac_version,
+                conf_f_cnt,
+                tx_dr,
+                tx_ch,
+                f_nwk_s_int_key,
+                s_nwk_s_int_key,
+            )?;
+            return Ok(mic.ct_eq(&calculated).into());
         }
 
         Ok(false)
@@ -613,7 +615,7 @@ impl PhyPayload {
         &mut self,
         mac_version: MACVersion,
         conf_f_cnt: u32,
-        s_nwk_s_int_key: &AES128Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<()> {
         self.mic =
             Some(self.calculate_downlink_data_mic(mac_version, conf_f_cnt, s_nwk_s_int_key)?);
@@ -625,11 +627,12 @@ impl PhyPayload {
         &mut self,
         mac_version: MACVersion,
         conf_f_cnt: u32,
-        s_nwk_s_int_key: &AES128Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<bool> {
         if let Some(mic) = self.mic {
-            return Ok(mic
-                == self.calculate_downlink_data_mic(mac_version, conf_f_cnt, s_nwk_s_int_key)?);
+            let calculated =
+                self.calculate_downlink_data_mic(mac_version, conf_f_cnt, s_nwk_s_int_key)?;
+            return Ok(mic.ct_eq(&calculated).into());
         }
 
         Ok(false)
@@ -639,7 +642,7 @@ impl PhyPayload {
     /// In order to validate the MIC, the f_cnt value must be first set to the full 32 bit
     /// frame-counter value, as only the 16 lsb are transmitted over the air.
     #[cfg(feature = "crypto")]
-    pub fn validate_uplink_data_micf(&self, f_nwk_s_int_key: &AES128Key) -> Result<bool> {
+    pub fn validate_uplink_data_micf(&self, f_nwk_s_int_key: &AES256Key) -> Result<bool> {
         // We are only interested in mic[2:] (cmacF bytes), therefore there is no
         // need to pass the correct confFCnt, txDR, txCh and sNwkSIntKey parameters.
         if let Some(v) = self.mic {
@@ -652,7 +655,7 @@ impl PhyPayload {
                 f_nwk_s_int_key,
             )?;
 
-            return Ok(v[2..] == mic[2..]);
+            return Ok(v[2..].ct_eq(&mic[2..]).into());
         }
 
         Ok(false)
@@ -660,17 +663,17 @@ impl PhyPayload {
 
     /// Set the join-request MIC.
     #[cfg(feature = "crypto")]
-    pub fn set_join_request_mic(&mut self, key: &AES128Key) -> Result<()> {
+    pub fn set_join_request_mic(&mut self, key: &AES256Key) -> Result<()> {
         self.mic = Some(self.calculate_upink_join_mic(key)?);
         Ok(())
     }
 
     /// Validate the join-request MIC.
     #[cfg(feature = "crypto")]
-    pub fn validate_join_request_mic(&self, key: &AES128Key) -> Result<bool> {
+    pub fn validate_join_request_mic(&self, key: &AES256Key) -> Result<bool> {
         if let Some(v) = self.mic {
             let mic = self.calculate_upink_join_mic(key)?;
-            return Ok(v == mic);
+            return Ok(v.ct_eq(&mic).into());
         }
 
         Ok(false)
@@ -683,7 +686,7 @@ impl PhyPayload {
         join_req_type: JoinType,
         join_eui: &EUI64,
         dev_nonce: u16,
-        key: &AES128Key,
+        key: &AES256Key,
     ) -> Result<()> {
         self.mic =
             Some(self.calculate_downlink_join_mic(join_req_type, join_eui, dev_nonce, key)?);
@@ -697,11 +700,11 @@ impl PhyPayload {
         join_req_type: JoinType,
         join_eui: &EUI64,
         dev_nonce: u16,
-        key: &AES128Key,
+        key: &AES256Key,
     ) -> Result<bool> {
         if let Some(v) = self.mic {
             let mic = self.calculate_downlink_join_mic(join_req_type, join_eui, dev_nonce, key)?;
-            return Ok(v == mic);
+            return Ok(v.ct_eq(&mic).into());
         }
 
         Ok(false)
@@ -713,7 +716,7 @@ impl PhyPayload {
     /// For encrypting a join-request response, use the nwk_key, for rejoin-request 0, 1 and 3
     /// response, use the js_enc_key.
     #[cfg(feature = "crypto")]
-    pub fn encrypt_join_accept_payload(&mut self, key: &AES128Key) -> Result<()> {
+    pub fn encrypt_join_accept_payload(&mut self, key: &AES256Key) -> Result<()> {
         use aes::cipher::KeyInit;
 
         if self.mic.is_none() {
@@ -730,7 +733,7 @@ impl PhyPayload {
 
             let key_bytes = key.to_bytes();
             let key = Array::from(key_bytes);
-            let cipher = Aes128::new(&key);
+            let cipher = Aes256::new(&key);
 
             let mut ct = Vec::new();
 
@@ -758,7 +761,7 @@ impl PhyPayload {
     /// For decrypting a join-request response, use the nwk_key, for rejoin-request 0, 1 and 3
     /// response, use the js_enc_key.
     #[cfg(feature = "crypto")]
-    pub fn decrypt_join_accept_payload(&mut self, key: &AES128Key) -> Result<()> {
+    pub fn decrypt_join_accept_payload(&mut self, key: &AES256Key) -> Result<()> {
         use aes::cipher::KeyInit;
 
         if self.mic.is_none() {
@@ -776,7 +779,7 @@ impl PhyPayload {
 
             let key_bytes = key.to_bytes();
             let key = Array::from(key_bytes);
-            let cipher = Aes128::new(&key);
+            let cipher = Aes256::new(&key);
 
             let mut pt = Vec::new();
 
@@ -801,7 +804,7 @@ impl PhyPayload {
 
     /// Encrypt the f_opts with the given key.
     #[cfg(feature = "crypto")]
-    pub fn encrypt_f_opts(&mut self, nwk_s_enc_key: &AES128Key) -> Result<()> {
+    pub fn encrypt_f_opts(&mut self, nwk_s_enc_key: &AES256Key) -> Result<()> {
         if let Payload::MACPayload(pl) = &mut self.payload {
             let f_opts_bytes = pl.fhdr.f_opts.to_vec()?;
             if f_opts_bytes.is_empty() {
@@ -832,7 +835,7 @@ impl PhyPayload {
     /// Decrypt the f_opts with the given key.
     /// This automatically calls decode_f_opts_to_mac_commands.
     #[cfg(feature = "crypto")]
-    pub fn decrypt_f_opts(&mut self, nwk_s_enc_key: &AES128Key) -> Result<()> {
+    pub fn decrypt_f_opts(&mut self, nwk_s_enc_key: &AES256Key) -> Result<()> {
         self.encrypt_f_opts(nwk_s_enc_key)?;
         self.decode_f_opts_to_mac_commands()?;
 
@@ -876,7 +879,7 @@ impl PhyPayload {
 
     /// Encrypt the frm_payload with the given key.
     #[cfg(feature = "crypto")]
-    pub fn encrypt_frm_payload(&mut self, key: &AES128Key) -> Result<()> {
+    pub fn encrypt_frm_payload(&mut self, key: &AES256Key) -> Result<()> {
         if let Payload::MACPayload(pl) = &mut self.payload {
             // nothing to do
             if pl.frm_payload.is_none() {
@@ -898,7 +901,7 @@ impl PhyPayload {
     ///
     /// This will automatically call decode_frm_payload.
     #[cfg(feature = "crypto")]
-    pub fn decrypt_frm_payload(&mut self, key: &AES128Key) -> Result<()> {
+    pub fn decrypt_frm_payload(&mut self, key: &AES256Key) -> Result<()> {
         if let Payload::MACPayload(pl) = &mut self.payload {
             // nothing to do
             if pl.frm_payload.is_none() {
@@ -922,8 +925,8 @@ impl PhyPayload {
         conf_f_cnt: u32,
         tx_dr: u8,
         tx_ch: u8,
-        f_nwk_s_int_key: &AES128Key,
-        s_nwk_s_int_key: &AES128Key,
+        f_nwk_s_int_key: &AES256Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<[u8; 4]> {
         if let Payload::MACPayload(pl) = &self.payload {
             // set to 0 if the uplink does not contain an ACK
@@ -963,7 +966,7 @@ impl PhyPayload {
             b1[3] = tx_dr;
             b1[4] = tx_ch;
 
-            let mut mac = Cmac::<Aes128>::new_from_slice(&s_nwk_s_int_key.to_bytes()).unwrap();
+            let mut mac = Cmac::<Aes256>::new_from_slice(&s_nwk_s_int_key.to_bytes()).unwrap();
             mac.update(&b1);
             mac.update(&mic_bytes);
 
@@ -972,7 +975,7 @@ impl PhyPayload {
                 return Err(anyhow!("cmac_s is less than 4 bytes"));
             }
 
-            let mut mac = Cmac::<Aes128>::new_from_slice(&f_nwk_s_int_key.to_bytes()).unwrap();
+            let mut mac = Cmac::<Aes256>::new_from_slice(&f_nwk_s_int_key.to_bytes()).unwrap();
             mac.update(&b0);
             mac.update(&mic_bytes);
 
@@ -1000,7 +1003,7 @@ impl PhyPayload {
         &self,
         mac_version: MACVersion,
         conf_f_cnt: u32,
-        s_nwk_s_int_key: &AES128Key,
+        s_nwk_s_int_key: &AES256Key,
     ) -> Result<[u8; 4]> {
         if let Payload::MACPayload(pl) = &self.payload {
             // set to 0 if the downlink does not contain an ack or in case of LoRaWAN 1.0
@@ -1026,7 +1029,7 @@ impl PhyPayload {
             b0[10..14].clone_from_slice(&pl.fhdr.f_cnt.to_le_bytes());
             b0[15] = mic_bytes.len() as u8;
 
-            let mut mac = Cmac::<Aes128>::new_from_slice(&s_nwk_s_int_key.to_bytes()).unwrap();
+            let mut mac = Cmac::<Aes256>::new_from_slice(&s_nwk_s_int_key.to_bytes()).unwrap();
             mac.update(&b0);
             mac.update(&mic_bytes);
 
@@ -1044,14 +1047,14 @@ impl PhyPayload {
     }
 
     #[cfg(feature = "crypto")]
-    fn calculate_upink_join_mic(&self, key: &AES128Key) -> Result<[u8; 4]> {
+    fn calculate_upink_join_mic(&self, key: &AES256Key) -> Result<[u8; 4]> {
         // mic bytes
         let mut mic_bytes = Vec::new();
 
         mic_bytes.extend_from_slice(&self.mhdr.to_le_bytes());
         mic_bytes.extend_from_slice(&self.payload.to_vec()?);
 
-        let mut mac = Cmac::<Aes128>::new_from_slice(&key.to_bytes()).unwrap();
+        let mut mac = Cmac::<Aes256>::new_from_slice(&key.to_bytes()).unwrap();
         mac.update(&mic_bytes);
 
         let hash = mac.finalize().into_bytes();
@@ -1070,7 +1073,7 @@ impl PhyPayload {
         join_req_type: JoinType,
         join_eui: &EUI64,
         dev_nonce: u16,
-        key: &AES128Key,
+        key: &AES256Key,
     ) -> Result<[u8; 4]> {
         if let Payload::JoinAccept(pl) = &self.payload {
             let mut mic_bytes = Vec::new();
@@ -1093,7 +1096,7 @@ impl PhyPayload {
             // JoinNonce | NetID | DevAddr | DLSettings | RxDelay | CFList
             mic_bytes.extend_from_slice(&pl.to_vec()?);
 
-            let mut mac = Cmac::<Aes128>::new_from_slice(&key.to_bytes()).unwrap();
+            let mut mac = Cmac::<Aes256>::new_from_slice(&key.to_bytes()).unwrap();
             mac.update(&mic_bytes);
 
             let hash = mac.finalize().into_bytes();
@@ -1119,7 +1122,7 @@ impl PhyPayload {
 ///   Set the a_fcnt_down to true and use the a_f_cnt_down as f_cnt.
 #[cfg(feature = "crypto")]
 pub fn encrypt_f_opts(
-    nwk_s_enc_key: &AES128Key,
+    nwk_s_enc_key: &AES256Key,
     a_fcnt_down: bool,
     uplink: bool,
     devaddr: &DevAddr,
@@ -1134,7 +1137,7 @@ pub fn encrypt_f_opts(
 
     let key_bytes = nwk_s_enc_key.to_bytes();
     let key = Array::from(key_bytes);
-    let cipher = Aes128::new(&key);
+    let cipher = Aes256::new(&key);
 
     let mut a = [0u8; 16];
     a[0] = 0x01;
@@ -1167,7 +1170,7 @@ pub fn encrypt_f_opts(
 /// Note that the same function is used for encryption and decryption.
 #[cfg(feature = "crypto")]
 pub fn encrypt_frm_payload(
-    key: &AES128Key,
+    key: &AES256Key,
     uplink: bool,
     devaddr: &DevAddr,
     f_cnt: u32,
@@ -1185,7 +1188,7 @@ pub fn encrypt_frm_payload(
 
     let key_bytes = key.to_bytes();
     let key = Array::from(key_bytes);
-    let cipher = Aes128::new(&key);
+    let cipher = Aes256::new(&key);
 
     let mut a = [0u8; 16];
     a[0] = 0x01;
@@ -1313,6 +1316,320 @@ mod tests {
         for tst in tests {
             assert_eq!(tst.bytes, tst.phy.to_vec().unwrap());
             assert_eq!(tst.phy, PhyPayload::from_slice(&tst.bytes).unwrap());
+        }
+    }
+
+    // V1-V10 of scripts/aes256_vectors.sh in the IoT-PQC repository: AES-256 frames made by the openssl command line,
+    // not by this code. Each frame is built and compared byte for byte, then decoded and its MIC checked.
+    #[cfg(feature = "crypto")]
+    mod aes256_vectors {
+        use std::str::FromStr;
+
+        use super::super::super::fhdr::{FCtrl, FHDR};
+        use super::super::super::payload::JoinRequestPayload;
+        use super::super::super::{DLSettings, DevAddr, NetID, keys};
+        use super::super::*;
+        use crate::Major;
+
+        const READING: &str = "7b22736571223a312c2274656d705f63223a32312e352c227268223a34387d";
+
+        fn key(s: &str) -> AES256Key {
+            AES256Key::from_str(s).unwrap()
+        }
+
+        fn data(
+            f_type: FType,
+            ack: bool,
+            f_cnt: u32,
+            f_opts: &str,
+            f_port: u8,
+            frm: &str,
+        ) -> PhyPayload {
+            let f_opts = hex::decode(f_opts).unwrap();
+            PhyPayload {
+                mhdr: MHDR {
+                    f_type,
+                    major: Major::LoRaWANR1,
+                },
+                payload: Payload::MACPayload(MACPayload {
+                    fhdr: FHDR {
+                        devaddr: DevAddr::from_be_bytes([0x01, 0x23, 0x45, 0x67]),
+                        f_ctrl: FCtrl {
+                            ack,
+                            ..Default::default()
+                        },
+                        f_cnt,
+                        f_opts: MACCommandSet::new(if f_opts.is_empty() {
+                            vec![]
+                        } else {
+                            vec![MACCommand::Raw(f_opts)]
+                        }),
+                    },
+                    f_port: Some(f_port),
+                    frm_payload: Some(FRMPayload::Raw(hex::decode(frm).unwrap())),
+                }),
+                mic: None,
+            }
+        }
+
+        fn rx(frame: &str) -> PhyPayload {
+            PhyPayload::from_slice(&hex::decode(frame).unwrap()).unwrap()
+        }
+
+        fn frm_payload(phy: &PhyPayload) -> Vec<u8> {
+            match &phy.payload {
+                Payload::MACPayload(MACPayload {
+                    frm_payload: Some(FRMPayload::Raw(b)),
+                    ..
+                }) => b.clone(),
+                _ => panic!("no FRMPayload"),
+            }
+        }
+
+        fn join_eui() -> EUI64 {
+            EUI64::from_str("1122334455667788").unwrap()
+        }
+
+        fn dev_eui() -> EUI64 {
+            EUI64::from_str("0102030405060708").unwrap()
+        }
+
+        fn join_request(k: &AES256Key) -> PhyPayload {
+            let mut phy = PhyPayload {
+                mhdr: MHDR {
+                    f_type: FType::JoinRequest,
+                    major: Major::LoRaWANR1,
+                },
+                payload: Payload::JoinRequest(JoinRequestPayload {
+                    join_eui: join_eui(),
+                    dev_eui: dev_eui(),
+                    dev_nonce: 1,
+                }),
+                mic: None,
+            };
+            phy.set_join_request_mic(k).unwrap();
+            phy
+        }
+
+        fn join_accept(opt_neg: bool) -> PhyPayload {
+            PhyPayload {
+                mhdr: MHDR {
+                    f_type: FType::JoinAccept,
+                    major: Major::LoRaWANR1,
+                },
+                payload: Payload::JoinAccept(JoinAcceptPayload {
+                    join_nonce: 1,
+                    home_netid: NetID::from_str("000013").unwrap(),
+                    devaddr: DevAddr::from_be_bytes([0x01, 0x23, 0x45, 0x67]),
+                    dl_settings: DLSettings {
+                        opt_neg,
+                        rx2_dr: 2,
+                        rx1_dr_offset: 0,
+                    },
+                    cflist: None,
+                    rx_delay: 1,
+                }),
+                mic: None,
+            }
+        }
+
+        // LoRaWAN 1.1, ABP
+        fn app_s_key() -> AES256Key {
+            key("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+        }
+        fn f_nwk_s_int_key() -> AES256Key {
+            key("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f")
+        }
+        fn s_nwk_s_int_key() -> AES256Key {
+            key("404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f")
+        }
+        fn nwk_s_enc_key() -> AES256Key {
+            key("606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f")
+        }
+        // LoRaWAN 1.0.x, ABP
+        fn nwk_s_key() -> AES256Key {
+            key("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
+        }
+
+        #[test]
+        fn v1_uplink_1_1() {
+            let frame = "406745230100010001eeccb898c8050f10c7774eefebb3632aa0bc573cc34bf30be2ae0f576c01271238d44f";
+            let (f, s) = (f_nwk_s_int_key(), s_nwk_s_int_key());
+            let mut phy = data(FType::UnconfirmedDataUp, false, 1, "", 1, READING);
+            phy.encrypt_frm_payload(&app_s_key()).unwrap();
+            phy.set_uplink_data_mic(MACVersion::LoRaWAN1_1, 0, 2, 1, &f, &s)
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            assert!(
+                phy.validate_uplink_data_mic(MACVersion::LoRaWAN1_1, 0, 2, 1, &f, &s)
+                    .unwrap()
+            );
+            assert!(phy.validate_uplink_data_micf(&f).unwrap());
+            assert!(
+                !phy.validate_uplink_data_mic(MACVersion::LoRaWAN1_1, 0, 2, 1, &s, &s)
+                    .unwrap()
+            );
+            phy.decrypt_frm_payload(&app_s_key()).unwrap();
+            assert_eq!(READING, hex::encode(frm_payload(&phy)));
+        }
+
+        #[test]
+        fn v2_uplink_1_1_ack_f_opts() {
+            let frame = "406745230123020056e8b20138a70827dd05";
+            let (f, s) = (f_nwk_s_int_key(), s_nwk_s_int_key());
+            let mut phy = data(FType::UnconfirmedDataUp, true, 2, "067307", 1, "6869");
+            phy.encrypt_f_opts(&nwk_s_enc_key()).unwrap();
+            phy.encrypt_frm_payload(&app_s_key()).unwrap();
+            phy.set_uplink_data_mic(MACVersion::LoRaWAN1_1, 7, 5, 2, &f, &s)
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let phy = rx(frame);
+            assert!(
+                phy.validate_uplink_data_mic(MACVersion::LoRaWAN1_1, 7, 5, 2, &f, &s)
+                    .unwrap()
+            );
+            assert!(
+                !phy.validate_uplink_data_mic(MACVersion::LoRaWAN1_1, 6, 5, 2, &f, &s)
+                    .unwrap()
+            );
+        }
+
+        #[test]
+        fn v3_downlink_1_1_a_f_cnt_down_f_opts() {
+            let frame = "606745230103050032fd3c01df219942a8cef152";
+            let mut phy = data(
+                FType::UnconfirmedDataDown,
+                false,
+                5,
+                "020701",
+                1,
+                "01020304",
+            );
+            phy.encrypt_f_opts(&nwk_s_enc_key()).unwrap();
+            phy.encrypt_frm_payload(&app_s_key()).unwrap();
+            phy.set_downlink_data_mic(MACVersion::LoRaWAN1_1, 0, &s_nwk_s_int_key())
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            assert!(
+                phy.validate_downlink_data_mic(MACVersion::LoRaWAN1_1, 0, &s_nwk_s_int_key())
+                    .unwrap()
+            );
+            phy.decrypt_frm_payload(&app_s_key()).unwrap();
+            assert_eq!("01020304", hex::encode(frm_payload(&phy)));
+        }
+
+        #[test]
+        fn v4_downlink_1_1_mac_commands_in_frm_payload() {
+            let frame = "606745230120090000b76ae989f2ef6c021d";
+            let mut phy = data(FType::UnconfirmedDataDown, true, 9, "", 0, "0351ff0001");
+            phy.encrypt_frm_payload(&nwk_s_enc_key()).unwrap();
+            phy.set_downlink_data_mic(MACVersion::LoRaWAN1_1, 3, &s_nwk_s_int_key())
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            assert!(
+                phy.validate_downlink_data_mic(MACVersion::LoRaWAN1_1, 3, &s_nwk_s_int_key())
+                    .unwrap()
+            );
+            assert!(
+                !phy.validate_downlink_data_mic(MACVersion::LoRaWAN1_1, 3, &nwk_s_enc_key())
+                    .unwrap()
+            );
+        }
+
+        #[test]
+        fn v5_uplink_1_0() {
+            let frame = "406745230103010006730701eeccb898c8050f10c7774eefebb3632aa0bc573cc34bf30be2ae0f576c012713808b44";
+            let n = nwk_s_key();
+            let mut phy = data(FType::UnconfirmedDataUp, false, 1, "067307", 1, READING);
+            phy.encrypt_frm_payload(&app_s_key()).unwrap();
+            phy.set_uplink_data_mic(MACVersion::LoRaWAN1_0, 0, 0, 0, &n, &n)
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            assert!(
+                phy.validate_uplink_data_mic(MACVersion::LoRaWAN1_0, 0, 0, 0, &n, &n)
+                    .unwrap()
+            );
+            phy.decrypt_frm_payload(&app_s_key()).unwrap();
+            assert_eq!(READING, hex::encode(frm_payload(&phy)));
+        }
+
+        #[test]
+        fn v6_downlink_1_0() {
+            let frame = "606745230120040000442794bf53f1e5ff9c";
+            let mut phy = data(FType::UnconfirmedDataDown, true, 4, "", 0, "0351ff0001");
+            phy.encrypt_frm_payload(&nwk_s_key()).unwrap();
+            phy.set_downlink_data_mic(MACVersion::LoRaWAN1_0, 0, &nwk_s_key())
+                .unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            assert!(
+                phy.validate_downlink_data_mic(MACVersion::LoRaWAN1_0, 0, &nwk_s_key())
+                    .unwrap()
+            );
+        }
+
+        #[test]
+        fn v7_v8_otaa_1_0() {
+            let app_key = key("a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf");
+
+            let frame = "00887766554433221108070605040302010100bc001704";
+            assert_eq!(frame, hex::encode(join_request(&app_key).to_vec().unwrap()));
+            assert!(rx(frame).validate_join_request_mic(&app_key).unwrap());
+
+            let frame = "202dfba0e58af087a565171f76ae4720ce";
+            let mut phy = join_accept(false);
+            phy.set_join_accept_mic(JoinType::Join, &join_eui(), 1, &app_key)
+                .unwrap();
+            assert_eq!([0x3b, 0x6b, 0x4a, 0xda], phy.mic.unwrap());
+            phy.encrypt_join_accept_payload(&app_key).unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            phy.decrypt_join_accept_payload(&app_key).unwrap();
+            assert!(
+                phy.validate_join_accept_mic(JoinType::Join, &join_eui(), 1, &app_key)
+                    .unwrap()
+            );
+            assert_eq!(join_accept(false).payload, phy.payload);
+        }
+
+        #[test]
+        fn v9_v10_otaa_1_1() {
+            let nwk_key = key("c0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedf");
+            let js_int_key = keys::get_js_int_key(&dev_eui(), &nwk_key).unwrap();
+
+            let frame = "0088776655443322110807060504030201010084b19606";
+            assert_eq!(frame, hex::encode(join_request(&nwk_key).to_vec().unwrap()));
+            assert!(rx(frame).validate_join_request_mic(&nwk_key).unwrap());
+
+            let frame = "204e91a3c904b43c2f393db3159f8abbfc";
+            let mut phy = join_accept(true);
+            phy.set_join_accept_mic(JoinType::Join, &join_eui(), 1, &js_int_key)
+                .unwrap();
+            assert_eq!([0x27, 0xde, 0xd5, 0x61], phy.mic.unwrap());
+            phy.encrypt_join_accept_payload(&nwk_key).unwrap();
+            assert_eq!(frame, hex::encode(phy.to_vec().unwrap()));
+
+            let mut phy = rx(frame);
+            phy.decrypt_join_accept_payload(&nwk_key).unwrap();
+            assert!(
+                phy.validate_join_accept_mic(JoinType::Join, &join_eui(), 1, &js_int_key)
+                    .unwrap()
+            );
+            assert!(
+                !phy.validate_join_accept_mic(JoinType::Join, &join_eui(), 2, &js_int_key)
+                    .unwrap()
+            );
         }
     }
 }

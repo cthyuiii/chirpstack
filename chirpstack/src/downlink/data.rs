@@ -23,7 +23,7 @@ use crate::storage::{
 use crate::uplink::{RelayContext, UplinkFrameSet};
 use crate::{adr, config, gateway, integration, maccommand, region, sensitivity};
 use chirpstack_api::{gw, integration as integration_pb, internal};
-use lrwn::{AES128Key, NetID, keys};
+use lrwn::{AES256Key, NetID, keys};
 
 struct DownlinkFrameItem {
     downlink_frame_item: gw::DownlinkFrameItem,
@@ -831,12 +831,12 @@ impl Data {
 
             if mac_size > 15 {
                 // Encrypt mac-commands.
-                phy.encrypt_frm_payload(&lrwn::AES128Key::from_slice(&ds.nwk_s_enc_key)?)
+                phy.encrypt_frm_payload(&lrwn::AES256Key::from_slice(&ds.nwk_s_enc_key)?)
                     .context("Encrypt frm_payload mac-commands")?;
             } else if self.device_queue_item.is_some() && !qi_encrypted {
                 // Encrypt application payload.
                 if let Some(key_env) = &ds.app_s_key {
-                    let app_s_key = lrwn::AES128Key::from_slice(&key_env.aes_key)?;
+                    let app_s_key = lrwn::AES256Key::from_slice(&key_env.aes_key)?;
                     phy.encrypt_frm_payload(&app_s_key)
                         .context("Encrypt frm_payload application payload")?;
                 }
@@ -844,7 +844,7 @@ impl Data {
 
             // Encrypt f_opts mac-commands (LoRaWAN 1.1)
             if !ds.mac_version().to_string().starts_with("1.0") {
-                phy.encrypt_f_opts(&lrwn::AES128Key::from_slice(&ds.nwk_s_enc_key)?)
+                phy.encrypt_f_opts(&lrwn::AES256Key::from_slice(&ds.nwk_s_enc_key)?)
                     .context("Encrypt f_opts")?;
             }
 
@@ -854,7 +854,7 @@ impl Data {
             phy.set_downlink_data_mic(
                 ds.mac_version().from_proto(),
                 device_f_cnt_up.overflowing_sub(1).0,
-                &lrwn::AES128Key::from_slice(&ds.s_nwk_s_int_key)?,
+                &lrwn::AES256Key::from_slice(&ds.s_nwk_s_int_key)?,
             )
             .context("Set downlink data MIC")?;
 
@@ -899,7 +899,7 @@ impl Data {
             };
 
             relay_phy
-                .encrypt_frm_payload(&lrwn::AES128Key::from_slice(&relay_ds.nwk_s_enc_key)?)?;
+                .encrypt_frm_payload(&lrwn::AES256Key::from_slice(&relay_ds.nwk_s_enc_key)?)?;
 
             // Set MIC.
             // If this is an ACK, then FCntUp has already been incremented by one. If
@@ -907,7 +907,7 @@ impl Data {
             relay_phy.set_downlink_data_mic(
                 relay_ds.mac_version().from_proto(),
                 (relay_ctx.device.f_cnt_up as u32) - 1,
-                &lrwn::AES128Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
+                &lrwn::AES256Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
             )?;
 
             let relay_phy_b = relay_phy.to_vec()?;
@@ -952,7 +952,7 @@ impl Data {
             relay_phy.set_downlink_data_mic(
                 relay_ds.mac_version().from_proto(),
                 (relay_ctx.device.f_cnt_up as u32) - 1,
-                &lrwn::AES128Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
+                &lrwn::AES256Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
             )?;
 
             let relay_phy_b = relay_phy.to_vec()?;
@@ -1603,7 +1603,7 @@ impl Data {
                                     continue;
                                 }
                             };
-                            let root_wor_s_key = keys::get_root_wor_s_key(&AES128Key::from_slice(
+                            let root_wor_s_key = keys::get_root_wor_s_key(&AES256Key::from_slice(
                                 &ds.nwk_s_enc_key,
                             )?)?;
 
@@ -1668,7 +1668,7 @@ impl Data {
                         }
                     };
                     let root_wor_s_key =
-                        keys::get_root_wor_s_key(&AES128Key::from_slice(&dss.nwk_s_enc_key)?)?;
+                        keys::get_root_wor_s_key(&AES256Key::from_slice(&dss.nwk_s_enc_key)?)?;
 
                     let set =
                         lrwn::MACCommandSet::new(vec![lrwn::MACCommand::UpdateUplinkListReq(
@@ -3214,6 +3214,7 @@ mod test {
     }
 
     #[tokio::test]
+    // root_wor_s_key: openssl KBKDF(NwkSEncKey 0^32, 01 | 0^15), see lrwn::keys::kdf.
     async fn test_update_uplink_list() {
         struct Test {
             name: String,
@@ -3296,9 +3297,10 @@ mod test {
                         },
                         dev_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
                         w_fcnt: 0,
-                        root_wor_s_key: AES128Key::from_bytes([
-                            0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb, 0xbf, 0x2b,
-                            0xf5, 0x8e, 0x0f, 0xd3,
+                        root_wor_s_key: AES256Key::from_bytes([
+                            0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24, 0x5b, 0x9c,
+                            0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e, 0xae, 0x73, 0xb3, 0x3a,
+                            0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7, 0x8b, 0x0e,
                         ]),
                     }),
                 ])],
@@ -3310,8 +3312,9 @@ mod test {
                             dev_eui: vec![2, 2, 2, 2, 2, 2, 2, 2],
                             join_eui: vec![],
                             root_wor_s_key: vec![
-                                0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb, 0xbf,
-                                0x2b, 0xf5, 0x8e, 0x0f, 0xd3,
+                                0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24, 0x5b,
+                                0x9c, 0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e, 0xae, 0x73,
+                                0xb3, 0x3a, 0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7, 0x8b, 0x0e,
                             ],
                             provisioned: false,
                             uplink_limit_reload_rate: 1,
@@ -3355,9 +3358,10 @@ mod test {
                         },
                         dev_addr: DevAddr::from_be_bytes([2, 2, 3, 4]),
                         w_fcnt: 0,
-                        root_wor_s_key: AES128Key::from_bytes([
-                            0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb, 0xbf, 0x2b,
-                            0xf5, 0x8e, 0x0f, 0xd3,
+                        root_wor_s_key: AES256Key::from_bytes([
+                            0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24, 0x5b, 0x9c,
+                            0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e, 0xae, 0x73, 0xb3, 0x3a,
+                            0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7, 0x8b, 0x0e,
                         ]),
                     }),
                 ])],
@@ -3369,8 +3373,9 @@ mod test {
                             dev_eui: vec![2, 2, 2, 2, 2, 2, 2, 2],
                             dev_addr: vec![2, 2, 3, 4],
                             root_wor_s_key: vec![
-                                0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb, 0xbf,
-                                0x2b, 0xf5, 0x8e, 0x0f, 0xd3,
+                                0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24, 0x5b,
+                                0x9c, 0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e, 0xae, 0x73,
+                                0xb3, 0x3a, 0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7, 0x8b, 0x0e,
                             ],
                             provisioned: false,
                             uplink_limit_reload_rate: 1,
@@ -3420,9 +3425,10 @@ mod test {
                         },
                         dev_addr: DevAddr::from_be_bytes([2, 2, 3, 4]),
                         w_fcnt: 0,
-                        root_wor_s_key: AES128Key::from_bytes([
-                            0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb, 0xbf, 0x2b,
-                            0xf5, 0x8e, 0x0f, 0xd3,
+                        root_wor_s_key: AES256Key::from_bytes([
+                            0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24, 0x5b, 0x9c,
+                            0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e, 0xae, 0x73, 0xb3, 0x3a,
+                            0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7, 0x8b, 0x0e,
                         ]),
                     }),
                 ])],
@@ -3446,8 +3452,10 @@ mod test {
                                 dev_eui: vec![3, 3, 3, 3, 3, 3, 3, 3],
                                 dev_addr: vec![2, 2, 3, 4],
                                 root_wor_s_key: vec![
-                                    0x47, 0x71, 0x18, 0x16, 0xe9, 0x1d, 0x6f, 0xf0, 0x59, 0xbb,
-                                    0xbf, 0x2b, 0xf5, 0x8e, 0x0f, 0xd3,
+                                    0xe6, 0x23, 0xbf, 0x8c, 0x12, 0xeb, 0x39, 0xec, 0x8d, 0x24,
+                                    0x5b, 0x9c, 0x03, 0x27, 0xf1, 0x13, 0x5c, 0x59, 0x52, 0x7e,
+                                    0xae, 0x73, 0xb3, 0x3a, 0xc2, 0xdf, 0xd1, 0xa3, 0xaa, 0xb7,
+                                    0x8b, 0x0e,
                                 ],
                                 provisioned: false,
                                 uplink_limit_reload_rate: 1,
@@ -3529,7 +3537,7 @@ mod test {
                     device_session: Some(
                         internal::DeviceSession {
                             dev_addr: dev_addr.to_vec(),
-                            nwk_s_enc_key: vec![0; 16],
+                            nwk_s_enc_key: vec![0; 32],
                             ..Default::default()
                         }
                         .into(),

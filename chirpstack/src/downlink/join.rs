@@ -535,7 +535,7 @@ impl JoinAccept<'_> {
             mic: None,
         };
 
-        relay_phy.encrypt_frm_payload(&lrwn::AES128Key::from_slice(&relay_ds.nwk_s_enc_key)?)?;
+        relay_phy.encrypt_frm_payload(&lrwn::AES256Key::from_slice(&relay_ds.nwk_s_enc_key)?)?;
 
         // Set MIC.
         // If this is an ACK, then FCntUp has already been incremented by one. If
@@ -543,7 +543,7 @@ impl JoinAccept<'_> {
         relay_phy.set_downlink_data_mic(
             relay_ds.mac_version().from_proto(),
             (relay_ctx.device.f_cnt_up as u32) - 1,
-            &lrwn::AES128Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
+            &lrwn::AES256Key::from_slice(&relay_ds.s_nwk_s_int_key)?,
         )?;
 
         let relay_phy_b = relay_phy.to_vec()?;

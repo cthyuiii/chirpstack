@@ -12,7 +12,7 @@ use crate::storage::{
 use crate::{config, gateway::backend as gateway_backend, integration, region, test, uplink};
 use chirpstack_api::{common, gw, integration as integration_pb, internal, stream};
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 type Function = Box<dyn Fn() -> Pin<Box<dyn Future<Output = ()>>>>;
 
@@ -100,9 +100,18 @@ async fn test_gateway_filtering() {
             internal::DeviceSession {
                 mac_version: common::MacVersion::Lorawan102.into(),
                 dev_addr: vec![1, 2, 3, 4],
-                f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                f_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                s_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                nwk_s_enc_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
                 n_f_cnt_down: 5,
                 enabled_uplink_channel_indices: vec![0, 1, 2],
                 rx1_delay: 1,
@@ -161,7 +170,7 @@ async fn test_gateway_filtering() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([48, 94, 26, 239]),
+                mic: Some([110, 103, 3, 128]),
             },
             assert: vec![assert::f_cnt_up(dev.dev_eui, 8)],
         },
@@ -188,7 +197,7 @@ async fn test_gateway_filtering() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([48, 94, 26, 239]),
+                mic: Some([110, 103, 3, 128]),
             },
             assert: vec![assert::f_cnt_up(dev.dev_eui, 7)],
         },
@@ -277,9 +286,18 @@ async fn test_lorawan_10_errors() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan102.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
         rx1_delay: 1,
@@ -312,7 +330,7 @@ async fn test_lorawan_10_errors() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([48, 94, 26, 239]),
+                mic: Some([110, 103, 3, 128]),
             },
             assert: vec![
                 assert::integration_log(vec![
@@ -345,7 +363,7 @@ async fn test_lorawan_10_errors() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([0x83, 0x24, 0x53, 0xa3]),
+                mic: Some([0x13, 0xfc, 0xe8, 0x98]),
             },
             assert: vec![
                 assert::integration_log(vec![
@@ -483,9 +501,18 @@ async fn test_lorawan_11_errors() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan102.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
         rx1_delay: 1,
@@ -518,7 +545,7 @@ async fn test_lorawan_11_errors() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![assert::no_uplink_event()],
         },
@@ -545,7 +572,7 @@ async fn test_lorawan_11_errors() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![assert::no_uplink_event()],
         },
@@ -635,9 +662,18 @@ async fn test_lorawan_10_skip_f_cnt() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan102.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
         rx1_delay: 1,
@@ -671,7 +707,7 @@ async fn test_lorawan_10_skip_f_cnt() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([48, 94, 26, 239]),
+                mic: Some([110, 103, 3, 128]),
             },
             assert: vec![
                 assert::uplink_event(integration_pb::UplinkEvent {
@@ -721,7 +757,7 @@ async fn test_lorawan_10_skip_f_cnt() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([131, 36, 83, 163]),
+                mic: Some([19, 252, 232, 152]),
             },
             assert: vec![
                 assert::uplink_event(integration_pb::UplinkEvent {
@@ -834,9 +870,18 @@ async fn test_lorawan_10_device_disabled() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan102.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
         rx1_delay: 1,
@@ -868,7 +913,7 @@ async fn test_lorawan_10_device_disabled() {
                 f_port: Some(1),
                 frm_payload: None,
             }),
-            mic: Some([48, 94, 26, 239]),
+            mic: Some([110, 103, 3, 128]),
         },
         assert: vec![
             assert::no_uplink_event(),
@@ -957,12 +1002,24 @@ async fn test_lorawan_10_uplink() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -996,7 +1053,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1019,7 +1076,7 @@ async fn test_lorawan_10_uplink() {
                     f_cnt: 10,
                     f_port: 1,
                     dr: 0,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -1069,7 +1126,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1092,7 +1149,7 @@ async fn test_lorawan_10_uplink() {
                     f_cnt: 10,
                     f_port: 1,
                     dr: 10,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -1132,7 +1189,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([132, 250, 228, 10]),
+                mic: Some([7, 60, 238, 122]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1172,7 +1229,7 @@ async fn test_lorawan_10_uplink() {
                     f_cnt: 10,
                     f_port: 1,
                     dr: 0,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -1201,7 +1258,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1253,7 +1310,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([69, 90, 200, 95]),
+                mic: Some([7, 219, 139, 207]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1277,7 +1334,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: 1,
                     dr: 0,
                     confirmed: true,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -1285,7 +1342,7 @@ async fn test_lorawan_10_uplink() {
                     gateway_id: "0102030405060708".into(),
                     items: vec![
                         gw::DownlinkFrameItem {
-                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                             tx_info_legacy: None,
                             tx_info: Some(gw::DownlinkTxInfo {
                                 frequency: 868100000,
@@ -1312,7 +1369,7 @@ async fn test_lorawan_10_uplink() {
                             }),
                         },
                         gw::DownlinkFrameItem {
-                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                             tx_info_legacy: None,
                             tx_info: Some(gw::DownlinkTxInfo {
                                 frequency: 869525000,
@@ -1366,7 +1423,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([210, 52, 52, 94]),
+                mic: Some([192, 219, 142, 249]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1397,7 +1454,7 @@ async fn test_lorawan_10_uplink() {
                     gateway_id: "0102030405060708".into(),
                     items: vec![
                         gw::DownlinkFrameItem {
-                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                             tx_info_legacy: None,
                             tx_info: Some(gw::DownlinkTxInfo {
                                 frequency: 868100000,
@@ -1424,7 +1481,7 @@ async fn test_lorawan_10_uplink() {
                             }),
                         },
                         gw::DownlinkFrameItem {
-                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                            phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                             tx_info_legacy: None,
                             tx_info: Some(gw::DownlinkTxInfo {
                                 frequency: 869525000,
@@ -1504,7 +1561,7 @@ async fn test_lorawan_10_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1597,9 +1654,18 @@ async fn test_lorawan_10_end_to_end_enc() {
     let ds_sess_key_id = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: None,
         js_session_key_id: vec![1, 2, 3],
         n_f_cnt_down: 5,
@@ -1613,9 +1679,18 @@ async fn test_lorawan_10_end_to_end_enc() {
     let ds_app_s_key = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "kek-label".into(),
             aes_key: vec![1, 2, 3],
@@ -1652,7 +1727,7 @@ async fn test_lorawan_10_end_to_end_enc() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![assert::uplink_event(integration_pb::UplinkEvent {
                 device_info: Some(integration_pb::DeviceInfo {
@@ -1704,7 +1779,7 @@ async fn test_lorawan_10_end_to_end_enc() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![assert::uplink_event(integration_pb::UplinkEvent {
                 device_info: Some(integration_pb::DeviceInfo {
@@ -1767,7 +1842,7 @@ async fn test_lorawan_10_end_to_end_enc() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 35, 121]),
+                mic: Some([4, 254, 37, 41]),
             },
             assert: vec![
                 assert::uplink_event(integration_pb::UplinkEvent {
@@ -1820,7 +1895,7 @@ async fn test_lorawan_10_end_to_end_enc() {
                             f_port: Some(1),
                             frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                         }),
-                        mic: Some([8, 125, 131, 36]),
+                        mic: Some([227, 127, 135, 9]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -1840,7 +1915,7 @@ async fn test_lorawan_10_end_to_end_enc() {
                             f_port: Some(1),
                             frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                         }),
-                        mic: Some([8, 125, 131, 36]),
+                        mic: Some([227, 127, 135, 9]),
                     },
                 ]),
             ],
@@ -1936,12 +2011,24 @@ async fn test_lorawan_11_uplink() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan110.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         conf_f_cnt: 4,
@@ -1976,7 +2063,7 @@ async fn test_lorawan_11_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([104, 147, 104, 147]),
+                mic: Some([4, 254, 4, 254]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -1999,7 +2086,7 @@ async fn test_lorawan_11_uplink() {
                     f_cnt: 10,
                     f_port: 1,
                     dr: 0,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -2039,7 +2126,7 @@ async fn test_lorawan_11_uplink() {
                     f_port: Some(1),
                     frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
                 }),
-                mic: Some([76, 46, 132, 250]),
+                mic: Some([209, 255, 7, 60]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -2079,7 +2166,7 @@ async fn test_lorawan_11_uplink() {
                     f_cnt: 10,
                     f_port: 1,
                     dr: 0,
-                    data: vec![215, 241, 112, 52],
+                    data: vec![48, 162, 134, 207],
                     region_config_id: "eu868".into(),
                     ..Default::default()
                 }),
@@ -2180,12 +2267,24 @@ async fn test_lorawan_10_rx_delay() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -2218,7 +2317,7 @@ async fn test_lorawan_10_rx_delay() {
                 f_port: Some(1),
                 frm_payload: None,
             }),
-            mic: Some([210, 52, 52, 94]),
+            mic: Some([192, 219, 142, 249]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
@@ -2249,7 +2348,7 @@ async fn test_lorawan_10_rx_delay() {
                 gateway_id: "0102030405060708".into(),
                 items: vec![
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 868100000,
@@ -2276,7 +2375,7 @@ async fn test_lorawan_10_rx_delay() {
                         }),
                     },
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 869525000,
@@ -2349,7 +2448,7 @@ async fn test_lorawan_10_rx_delay() {
                 f_port: Some(1),
                 frm_payload: None,
             }),
-            mic: Some([210, 52, 52, 94]),
+            mic: Some([192, 219, 142, 249]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
@@ -2380,7 +2479,7 @@ async fn test_lorawan_10_rx_delay() {
                 gateway_id: "0102030405060708".into(),
                 items: vec![
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 868100000,
@@ -2407,7 +2506,7 @@ async fn test_lorawan_10_rx_delay() {
                         }),
                     },
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 161, 179, 218, 104],
+                        phy_payload: vec![96, 4, 3, 2, 1, 160, 5, 0, 193, 39, 29, 57],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 869525000,
@@ -2480,7 +2579,7 @@ async fn test_lorawan_10_rx_delay() {
                 f_port: Some(1),
                 frm_payload: None,
             }),
-            mic: Some([210, 52, 52, 94]),
+            mic: Some([192, 219, 142, 249]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
@@ -2530,7 +2629,7 @@ async fn test_lorawan_10_rx_delay() {
                         f_port: None,
                         frm_payload: None,
                     }),
-                    mic: Some([37, 72, 226, 133]),
+                    mic: Some([49, 45, 132, 242]),
                 },
                 lrwn::PhyPayload {
                     mhdr: lrwn::MHDR {
@@ -2554,7 +2653,7 @@ async fn test_lorawan_10_rx_delay() {
                         f_port: None,
                         frm_payload: None,
                     }),
-                    mic: Some([37, 72, 226, 133]),
+                    mic: Some([49, 45, 132, 242]),
                 },
             ]),
         ],
@@ -2649,12 +2748,24 @@ async fn test_lorawan_10_mac_commands() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -2702,7 +2813,7 @@ async fn test_lorawan_10_mac_commands() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -2729,7 +2840,7 @@ async fn test_lorawan_10_mac_commands() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([250, 240, 150, 219]),
+                        mic: Some([148, 20, 120, 251]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -2752,7 +2863,7 @@ async fn test_lorawan_10_mac_commands() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([250, 240, 150, 219]),
+                        mic: Some([148, 20, 120, 251]),
                     },
                 ]),
             ],
@@ -2801,7 +2912,7 @@ async fn test_lorawan_10_mac_commands() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -2826,9 +2937,9 @@ async fn test_lorawan_10_mac_commands() {
                                 )]),
                             },
                             f_port: Some(1),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([21, 204, 213, 101]),
+                        mic: Some([235, 236, 18, 104]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -2849,9 +2960,9 @@ async fn test_lorawan_10_mac_commands() {
                                 )]),
                             },
                             f_port: Some(1),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([21, 204, 213, 101]),
+                        mic: Some([235, 236, 18, 104]),
                     },
                 ]),
             ],
@@ -2884,7 +2995,7 @@ async fn test_lorawan_10_mac_commands() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([0xb6, 0x20, 0xd2, 0x14]),
+                mic: Some([0x24, 0x93, 0x39, 0xda]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -2907,7 +3018,7 @@ async fn test_lorawan_10_mac_commands() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xc1, 0x0a, 0x08, 0xd9]),
+                        mic: Some([0xac, 0x5d, 0x1e, 0x25]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -2927,7 +3038,7 @@ async fn test_lorawan_10_mac_commands() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xc1, 0x0a, 0x08, 0xd9]),
+                        mic: Some([0xac, 0x5d, 0x1e, 0x25]),
                     },
                 ]),
             ],
@@ -3017,12 +3128,24 @@ async fn test_lorawan_11_mac_commands() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan110.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -3054,15 +3177,15 @@ async fn test_lorawan_11_mac_commands() {
         mic: None,
     };
 
-    phy.encrypt_f_opts(&AES128Key::from_slice(&ds.nwk_s_enc_key).unwrap())
+    phy.encrypt_f_opts(&AES256Key::from_slice(&ds.nwk_s_enc_key).unwrap())
         .unwrap();
     phy.set_uplink_data_mic(
         lrwn::MACVersion::LoRaWAN1_1,
         0,
         0,
         0,
-        &AES128Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
-        &AES128Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
+        &AES256Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
+        &AES256Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
     )
     .unwrap();
 
@@ -3094,14 +3217,14 @@ async fn test_lorawan_11_mac_commands() {
                                 ..Default::default()
                             },
                             f_opts: lrwn::MACCommandSet::new(vec![lrwn::MACCommand::Raw(vec![
-                                85, 88, 242,
+                                19, 192, 49,
                             ])]),
                             ..Default::default()
                         },
                         f_port: None,
                         frm_payload: None,
                     }),
-                    mic: Some([124, 101, 247, 223]),
+                    mic: Some([5, 17, 239, 158]),
                 },
                 lrwn::PhyPayload {
                     mhdr: lrwn::MHDR {
@@ -3118,14 +3241,14 @@ async fn test_lorawan_11_mac_commands() {
                                 ..Default::default()
                             },
                             f_opts: lrwn::MACCommandSet::new(vec![lrwn::MACCommand::Raw(vec![
-                                85, 88, 242,
+                                19, 192, 49,
                             ])]),
                             ..Default::default()
                         },
                         f_port: None,
                         frm_payload: None,
                     }),
-                    mic: Some([124, 101, 247, 223]),
+                    mic: Some([5, 17, 239, 158]),
                 },
             ]),
         ],
@@ -3218,12 +3341,24 @@ async fn test_lorawan_10_device_queue() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -3263,7 +3398,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3285,9 +3420,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([180, 235, 116, 59]),
+                        mic: Some([51, 60, 195, 167]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3305,9 +3440,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([180, 235, 116, 59]),
+                        mic: Some([51, 60, 195, 167]),
                     },
                 ]),
             ],
@@ -3355,7 +3490,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::no_downlink_frame(),
@@ -3399,7 +3534,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3423,9 +3558,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([126, 136, 139, 5]),
+                        mic: Some([122, 105, 80, 32]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3445,9 +3580,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([126, 136, 139, 5]),
+                        mic: Some([122, 105, 80, 32]),
                     },
                 ]),
             ],
@@ -3482,7 +3617,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3504,9 +3639,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([175, 180, 11, 241]),
+                        mic: Some([35, 25, 229, 147]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3524,9 +3659,9 @@ async fn test_lorawan_10_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![115, 46, 73, 87])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![99, 16, 57, 231])),
                         }),
-                        mic: Some([175, 180, 11, 241]),
+                        mic: Some([35, 25, 229, 147]),
                     },
                 ]),
             ],
@@ -3560,7 +3695,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 68, 8]),
+                mic: Some([196, 255, 106, 72]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3602,7 +3737,7 @@ async fn test_lorawan_10_device_queue() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([106, 14, 124, 212]),
+                mic: Some([234, 52, 45, 116]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3631,7 +3766,7 @@ async fn test_lorawan_10_device_queue() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([183, 102, 104, 194]),
+                        mic: Some([142, 63, 181, 122]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3657,7 +3792,7 @@ async fn test_lorawan_10_device_queue() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([183, 102, 104, 194]),
+                        mic: Some([142, 63, 181, 122]),
                     },
                 ]),
             ],
@@ -3747,12 +3882,24 @@ async fn test_lorawan_11_device_queue() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan110.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         a_f_cnt_down: 3,
@@ -3793,7 +3940,7 @@ async fn test_lorawan_11_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3815,9 +3962,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([75, 196, 253, 79]),
+                        mic: Some([124, 157, 205, 132]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3835,9 +3982,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([75, 196, 253, 79]),
+                        mic: Some([124, 157, 205, 132]),
                     },
                 ]),
             ],
@@ -3880,7 +4027,7 @@ async fn test_lorawan_11_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3904,9 +4051,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([148, 237, 227, 26]),
+                        mic: Some([63, 162, 226, 121]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -3926,9 +4073,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([148, 237, 227, 26]),
+                        mic: Some([63, 162, 226, 121]),
                     },
                 ]),
             ],
@@ -3963,7 +4110,7 @@ async fn test_lorawan_11_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -3985,9 +4132,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([144, 242, 239, 76]),
+                        mic: Some([138, 93, 240, 96]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4005,9 +4152,9 @@ async fn test_lorawan_11_device_queue() {
                                 ..Default::default()
                             },
                             f_port: Some(10),
-                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![142, 117, 88, 70])),
+                            frm_payload: Some(lrwn::FRMPayload::Raw(vec![7, 37, 46, 162])),
                         }),
-                        mic: Some([144, 242, 239, 76]),
+                        mic: Some([138, 93, 240, 96]),
                     },
                 ]),
             ],
@@ -4041,7 +4188,7 @@ async fn test_lorawan_11_device_queue() {
                     f_port: Some(1),
                     frm_payload: None,
                 }),
-                mic: Some([160, 195, 160, 195]),
+                mic: Some([196, 255, 196, 255]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4078,14 +4225,14 @@ async fn test_lorawan_11_device_queue() {
                             ..Default::default()
                         },
                         f_opts: lrwn::MACCommandSet::new(vec![
-                            lrwn::MACCommand::Raw(vec![61]), // encrypted LinkCheckReq
+                            lrwn::MACCommand::Raw(vec![76]), // encrypted LinkCheckReq
                         ]),
                         ..Default::default()
                     },
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([204, 225, 204, 225]),
+                mic: Some([226, 4, 226, 4]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4107,14 +4254,14 @@ async fn test_lorawan_11_device_queue() {
                                     ..Default::default()
                                 },
                                 f_opts: lrwn::MACCommandSet::new(vec![
-                                    lrwn::MACCommand::Raw(vec![85, 88, 242]),
+                                    lrwn::MACCommand::Raw(vec![19, 192, 49]),
                                 ]),
                                 ..Default::default()
                             },
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([227, 104, 50, 163]),
+                        mic: Some([103, 80, 120, 52]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4133,14 +4280,14 @@ async fn test_lorawan_11_device_queue() {
                                     ..Default::default()
                                 },
                                 f_opts: lrwn::MACCommandSet::new(vec![
-                                    lrwn::MACCommand::Raw(vec![85, 88, 242]),
+                                    lrwn::MACCommand::Raw(vec![19, 192, 49]),
                                 ]),
                                 ..Default::default()
                             },
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([227, 104, 50, 163]),
+                        mic: Some([103, 80, 120, 52]),
                     },
                 ]),
             ],
@@ -4231,12 +4378,24 @@ async fn test_lorawan_10_adr() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -4292,7 +4451,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([187, 243, 244, 117]),
+                mic: Some([254, 23, 29, 62]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4330,7 +4489,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([57, 103, 222, 92]),
+                        mic: Some([3, 39, 13, 16]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4364,7 +4523,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([57, 103, 222, 92]),
+                        mic: Some([3, 39, 13, 16]),
                     },
                 ]),
             ],
@@ -4396,7 +4555,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4457,7 +4616,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([235, 224, 96, 3]),
+                mic: Some([77, 145, 61, 161]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4522,7 +4681,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([252, 17, 226, 74]),
+                mic: Some([204, 193, 226, 135]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4560,7 +4719,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([73, 26, 32, 42]),
+                mic: Some([170, 173, 165, 98]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4585,7 +4744,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xc1, 0xa, 0x8, 0xd9]),
+                        mic: Some([0xac, 0x5d, 0x1e, 0x25]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4605,7 +4764,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xc1, 0xa, 0x8, 0xd9]),
+                        mic: Some([0xac, 0x5d, 0x1e, 0x25]),
                     },
                 ]),
             ],
@@ -4633,7 +4792,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4669,7 +4828,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0x8, 0xee, 0xdd, 0x34]),
+                        mic: Some([0x3a, 0x44, 0x26, 0x55]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4701,7 +4860,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0x8, 0xee, 0xdd, 0x34]),
+                        mic: Some([0x3a, 0x44, 0x26, 0x55]),
                     },
                 ]),
                 assert::enabled_uplink_channel_indices(dev.dev_eui, vec![0, 1, 2, 3, 4, 5, 6, 7]),
@@ -4761,7 +4920,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([235, 224, 96, 3]),
+                mic: Some([77, 145, 61, 161]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4824,7 +4983,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([252, 17, 226, 74]),
+                mic: Some([204, 193, 226, 135]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4859,7 +5018,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([187, 243, 244, 117]),
+                mic: Some([254, 23, 29, 62]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -4896,7 +5055,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([57, 103, 222, 92]),
+                        mic: Some([3, 39, 13, 16]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -4928,7 +5087,7 @@ async fn test_lorawan_10_adr() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([57, 103, 222, 92]),
+                        mic: Some([3, 39, 13, 16]),
                     },
                 ]),
             ],
@@ -4961,7 +5120,7 @@ async fn test_lorawan_10_adr() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([187, 243, 244, 117]),
+                mic: Some([254, 23, 29, 62]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -5065,12 +5224,24 @@ async fn test_lorawan_10_device_status_request() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -5109,7 +5280,7 @@ async fn test_lorawan_10_device_status_request() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -5135,7 +5306,7 @@ async fn test_lorawan_10_device_status_request() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xfa, 0xf0, 0x96, 0xdb]),
+                        mic: Some([0x94, 0x14, 0x78, 0xfb]),
                     },
                     lrwn::PhyPayload {
                         mhdr: lrwn::MHDR {
@@ -5158,7 +5329,7 @@ async fn test_lorawan_10_device_status_request() {
                             f_port: None,
                             frm_payload: None,
                         }),
-                        mic: Some([0xfa, 0xf0, 0x96, 0xdb]),
+                        mic: Some([0x94, 0x14, 0x78, 0xfb]),
                     },
                 ]),
             ],
@@ -5186,7 +5357,7 @@ async fn test_lorawan_10_device_status_request() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([122, 152, 152, 220]),
+                mic: Some([19, 16, 4, 15]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -5226,7 +5397,7 @@ async fn test_lorawan_10_device_status_request() {
                     f_port: None,
                     frm_payload: None,
                 }),
-                mic: Some([29, 141, 54, 155]),
+                mic: Some([114, 76, 138, 205]),
             },
             assert: vec![
                 assert::f_cnt_up(dev.dev_eui, 11),
@@ -5339,12 +5510,24 @@ async fn test_lorawan_11_receive_window_selection() {
     let ds = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan110.into(),
         dev_addr: vec![1, 2, 3, 4],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         conf_f_cnt: 4,
@@ -5388,14 +5571,14 @@ async fn test_lorawan_11_receive_window_selection() {
                 f_port: Some(1),
                 frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
             }),
-            mic: Some([104, 147, 104, 147]),
+            mic: Some([4, 254, 4, 254]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
             assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 240, 144, 155, 230, 40],
+                    phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 192, 22, 223, 103, 134],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 868100000,
@@ -5468,14 +5651,14 @@ async fn test_lorawan_11_receive_window_selection() {
                 f_port: Some(1),
                 frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
             }),
-            mic: Some([104, 147, 104, 147]),
+            mic: Some([4, 254, 4, 254]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
             assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 240, 144, 155, 230, 40],
+                    phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 192, 22, 223, 103, 134],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 869525000,
@@ -5548,7 +5731,7 @@ async fn test_lorawan_11_receive_window_selection() {
                 f_port: Some(1),
                 frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
             }),
-            mic: Some([104, 147, 104, 147]),
+            mic: Some([4, 254, 4, 254]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
@@ -5556,7 +5739,7 @@ async fn test_lorawan_11_receive_window_selection() {
                 gateway_id: "0102030405060708".into(),
                 items: vec![
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 240, 144, 155, 230, 40],
+                        phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 192, 22, 223, 103, 134],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 868100000,
@@ -5583,7 +5766,7 @@ async fn test_lorawan_11_receive_window_selection() {
                         }),
                     },
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 240, 144, 155, 230, 40],
+                        phy_payload: vec![96, 4, 3, 2, 1, 128, 0, 0, 1, 192, 22, 223, 103, 134],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 869525000,
@@ -5657,7 +5840,7 @@ async fn test_lorawan_11_receive_window_selection() {
                 f_port: Some(1),
                 frm_payload: Some(lrwn::FRMPayload::Raw(vec![1, 2, 3, 4])),
             }),
-            mic: Some([0xd4, 0x59, 0x68, 0x93]),
+            mic: Some([0x44, 0x9d, 0x04, 0xfe]),
         },
         assert: vec![
             assert::f_cnt_up(dev.dev_eui, 11),
@@ -5666,14 +5849,14 @@ async fn test_lorawan_11_receive_window_selection() {
                 items: vec![
                     gw::DownlinkFrameItem {
                         phy_payload: vec![
-                            96, 4, 3, 2, 1, 128, 0, 0, 1, 241, 182, 107, 217, 100, 233, 112, 234,
-                            103, 130, 120, 149, 93, 124, 5, 214, 1, 4, 6, 231, 84, 91, 241, 75,
-                            121, 151, 52, 245, 144, 78, 149, 186, 84, 236, 188, 0, 218, 131, 120,
-                            151, 163, 8, 184, 104, 212, 205, 194, 222, 92, 137, 144, 60, 251, 141,
-                            71, 87, 8, 192, 155, 215, 169, 180, 156, 204, 162, 159, 71, 200, 32,
-                            15, 39, 173, 94, 78, 204, 43, 254, 9, 12, 132, 91, 8, 2, 93, 149, 184,
-                            152, 187, 95, 49, 125, 43, 91, 149, 177, 152, 82, 34, 124, 17, 64, 200,
-                            9, 227,
+                            96, 4, 3, 2, 1, 128, 0, 0, 1, 193, 86, 233, 118, 77, 241, 150, 155, 90,
+                            6, 12, 206, 131, 23, 121, 214, 1, 189, 85, 91, 31, 96, 195, 225, 93,
+                            176, 50, 5, 208, 187, 173, 22, 49, 150, 241, 150, 190, 183, 174, 153,
+                            98, 158, 23, 119, 108, 189, 30, 150, 221, 188, 117, 70, 75, 120, 55,
+                            244, 206, 13, 115, 172, 198, 131, 70, 72, 222, 203, 197, 171, 24, 163,
+                            239, 46, 60, 243, 214, 36, 232, 112, 214, 196, 154, 30, 198, 166, 186,
+                            51, 129, 195, 32, 38, 135, 190, 41, 121, 228, 195, 200, 75, 73, 232,
+                            62, 22, 78, 24,
                         ],
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
@@ -5701,7 +5884,7 @@ async fn test_lorawan_11_receive_window_selection() {
                         }),
                     },
                     gw::DownlinkFrameItem {
-                        phy_payload: vec![96, 4, 3, 2, 1, 144, 5, 0, 88, 62, 73, 197], // f_pending = true
+                        phy_payload: vec![96, 4, 3, 2, 1, 144, 5, 0, 119, 223, 151, 210], // f_pending = true
                         tx_info_legacy: None,
                         tx_info: Some(gw::DownlinkTxInfo {
                             frequency: 869525000,

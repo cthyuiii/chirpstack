@@ -2841,6 +2841,7 @@ dependencies = [
  "diesel",
  "hex",
  "serde",
+ "subtle",
  "thiserror 2.0.18",
 ]
 

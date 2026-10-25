@@ -81,12 +81,24 @@ async fn test_downlink_scheduler() {
     let ds = internal::DeviceSession {
         dev_addr: vec![1, 2, 3, 4],
         mac_version: common::MacVersion::Lorawan104.into(),
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -156,7 +168,7 @@ async fn test_downlink_scheduler() {
             assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![96, 4, 3, 2, 1, 128, 5, 0, 10, 115, 46, 73, 41, 113, 46, 49],
+                    phy_payload: vec![96, 4, 3, 2, 1, 128, 5, 0, 10, 99, 16, 57, 115, 30, 223, 220],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 869525000,
@@ -231,7 +243,7 @@ async fn test_downlink_scheduler() {
                 gateway_id: "0102030405060708".into(),
                 items: vec![gw::DownlinkFrameItem {
                     phy_payload: vec![
-                        160, 4, 3, 2, 1, 128, 5, 0, 10, 115, 46, 73, 138, 39, 53, 228,
+                        160, 4, 3, 2, 1, 128, 5, 0, 10, 99, 16, 57, 234, 230, 155, 79,
                     ],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {

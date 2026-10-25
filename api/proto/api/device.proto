@@ -271,15 +271,15 @@ message DeviceKeys {
   // DevEUI (EUI64).
   string dev_eui = 1;
 
-  // Network root key (128 bit).
+  // Network root key (256 bit).
   // Note: For LoRaWAN 1.0.x, use this field for the LoRaWAN 1.0.x 'AppKey`!
   string nwk_key = 2;
 
-  // Application root key (128 bit).
+  // Application root key (256 bit).
   // Note: This field only needs to be set for LoRaWAN 1.1.x devices!
   string app_key = 3;
 
-  // Gen App Key (128 bit).
+  // Gen App Key (256 bit).
   // Note: This field only needs to be set for LoRaWAN 1.0.x devices that
   // implement TS005 (remote multicast setup).
   string gen_app_key = 4;

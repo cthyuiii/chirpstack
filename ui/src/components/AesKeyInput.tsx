@@ -20,8 +20,8 @@ function AesKeyInput(props: IProps) {
 
     let value = "";
     if (match) {
-      if (match.length > 32) {
-        value = match.slice(0, 32).join("");
+      if (match.length > 64) {
+        value = match.slice(0, 64).join("");
       } else {
         value = match.join("");
       }
@@ -32,7 +32,7 @@ function AesKeyInput(props: IProps) {
 
   const generateRandom = () => {
     const cryptoObj = window.crypto || window.Crypto;
-    const b = new Uint8Array(16);
+    const b = new Uint8Array(32);
     cryptoObj.getRandomValues(b);
 
     const key = Buffer.from(b).toString("hex");
@@ -128,7 +128,7 @@ function AesKeyInput(props: IProps) {
         {
           required: props.required,
           message: `Please enter a valid ${props.label}`,
-          pattern: new RegExp(/[A-Fa-f0-9]{32}/g),
+          pattern: new RegExp(/[A-Fa-f0-9]{64}/g),
         },
       ]}
       label={props.label}

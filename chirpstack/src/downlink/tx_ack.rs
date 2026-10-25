@@ -3,7 +3,7 @@ use chrono::{Duration, Utc};
 use tracing::{Instrument, Level, error, info, span, trace};
 use uuid::Uuid;
 
-use lrwn::{AES128Key, EUI64, FType, Payload, PhyPayload};
+use lrwn::{AES256Key, EUI64, FType, Payload, PhyPayload};
 
 use crate::api::helpers::ToProto;
 use crate::gpstime::ToDateTime;
@@ -588,7 +588,7 @@ impl TxAck {
         let df = self.downlink_frame.as_ref().unwrap();
 
         let mut phy = self.phy_payload.as_ref().unwrap().clone();
-        let nwk_s_enc_key = AES128Key::from_slice(&df.nwk_s_enc_key)?;
+        let nwk_s_enc_key = AES256Key::from_slice(&df.nwk_s_enc_key)?;
 
         // We need to set the full AFCntDown to decrypt the FRMPayload holding the
         // ForwardDownlinkReq.
@@ -658,7 +658,7 @@ impl TxAck {
             return Ok(());
         }
 
-        let nwk_s_enc_key = AES128Key::from_slice(&df.nwk_s_enc_key)?;
+        let nwk_s_enc_key = AES256Key::from_slice(&df.nwk_s_enc_key)?;
 
         // Set the full frame-counter value.
         // This is needed to decrypt the mac-commands and / or FrmPayload (in case of Relay).

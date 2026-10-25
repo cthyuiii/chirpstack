@@ -15,7 +15,7 @@ use crate::storage::schema::{
     fuota_deployment_job, gateway, tenant,
 };
 use crate::storage::{self, device_profile, fields, get_async_db_conn};
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Validate)]
 #[diesel(table_name = fuota_deployment)]
@@ -29,7 +29,7 @@ pub struct FuotaDeployment {
     pub application_id: fields::Uuid,
     pub device_profile_id: fields::Uuid,
     pub multicast_addr: DevAddr,
-    pub multicast_key: AES128Key,
+    pub multicast_key: AES256Key,
     pub multicast_group_type: String,
     pub multicast_class_c_scheduling_type: fields::MulticastGroupSchedulingType,
     pub multicast_dr: i16,

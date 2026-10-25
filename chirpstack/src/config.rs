@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, DevAddrPrefix, EUI64Prefix, NetID};
+use lrwn::{AES256Key, DevAddrPrefix, EUI64Prefix, NetID};
 
 static CONFIG: LazyLock<Mutex<Arc<Configuration>>> =
     LazyLock::new(|| Mutex::new(Arc::new(Default::default())));
@@ -632,7 +632,7 @@ pub struct RoamingServerDefault {
 #[serde(default)]
 pub struct Kek {
     pub label: String,
-    pub kek: AES128Key,
+    pub kek: AES256Key,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

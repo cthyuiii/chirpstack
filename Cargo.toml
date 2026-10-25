@@ -41,6 +41,7 @@
     rand = "0.10"
     getrandom = "0.4"
     aes-kw = "0.3"
+    subtle = "2.6"
     hmac = "0.13"
     sha2 = "0.11"
     pbkdf2 = { version = "0.13", features = ["phc", "getrandom"] }

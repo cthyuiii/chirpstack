@@ -11,7 +11,7 @@ use crate::storage::{
 use crate::{gateway::backend as gateway_backend, integration, test, uplink};
 use chirpstack_api::{common, gw, internal};
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 #[tokio::test]
 async fn test_lorawan_10() {
@@ -89,7 +89,10 @@ async fn test_lorawan_10() {
 
     let dk_dev = device_keys::create(device_keys::DeviceKeys {
         dev_eui: dev.dev_eui,
-        nwk_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+        nwk_key: AES256Key::from_bytes([
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5,
+            6, 7, 8,
+        ]),
         ..Default::default()
     })
     .await
@@ -106,9 +109,18 @@ async fn test_lorawan_10() {
             internal::DeviceSession {
                 mac_version: common::MacVersion::Lorawan102.into(),
                 dev_addr: vec![4, 3, 2, 1],
-                f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                f_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                s_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                nwk_s_enc_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
                 n_f_cnt_down: 5,
                 rx1_delay: 1,
                 rx2_frequency: 869525000,
@@ -205,7 +217,7 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_jr
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_jr
         .set_uplink_data_mic(
@@ -213,8 +225,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -256,13 +268,13 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_ja
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_ja
         .set_downlink_data_mic(
             lrwn::MACVersion::LoRaWAN1_0,
             10,
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -273,18 +285,22 @@ async fn test_lorawan_10() {
                 dev_addr: vec![1, 2, 3, 4],
                 mac_version: common::MacVersion::Lorawan102.into(),
                 f_nwk_s_int_key: vec![
-                    146, 184, 94, 251, 180, 89, 48, 96, 236, 112, 106, 181, 94, 25, 215, 162,
+                    34, 231, 150, 77, 27, 101, 242, 195, 222, 179, 42, 139, 0, 79, 222, 177, 247,
+                    109, 234, 250, 130, 136, 153, 112, 129, 125, 147, 129, 255, 44, 248, 21,
                 ],
                 s_nwk_s_int_key: vec![
-                    146, 184, 94, 251, 180, 89, 48, 96, 236, 112, 106, 181, 94, 25, 215, 162,
+                    34, 231, 150, 77, 27, 101, 242, 195, 222, 179, 42, 139, 0, 79, 222, 177, 247,
+                    109, 234, 250, 130, 136, 153, 112, 129, 125, 147, 129, 255, 44, 248, 21,
                 ],
                 nwk_s_enc_key: vec![
-                    146, 184, 94, 251, 180, 89, 48, 96, 236, 112, 106, 181, 94, 25, 215, 162,
+                    34, 231, 150, 77, 27, 101, 242, 195, 222, 179, 42, 139, 0, 79, 222, 177, 247,
+                    109, 234, 250, 130, 136, 153, 112, 129, 125, 147, 129, 255, 44, 248, 21,
                 ],
                 app_s_key: Some(common::KeyEnvelope {
                     kek_label: "".to_string(),
                     aes_key: vec![
-                        181, 55, 181, 113, 220, 19, 233, 58, 156, 54, 209, 48, 209, 201, 73, 33,
+                        205, 151, 166, 164, 68, 204, 214, 19, 223, 79, 59, 15, 195, 45, 197, 196,
+                        38, 35, 72, 174, 231, 216, 139, 222, 92, 84, 53, 88, 166, 152, 220, 196,
                     ],
                 }),
                 rx1_delay: 1,

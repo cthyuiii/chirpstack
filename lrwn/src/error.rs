@@ -8,8 +8,8 @@ pub enum Error {
     #[error("EUI64 expects exactly 8 bytes")]
     Eui64Length,
 
-    #[error("AES128Key expects exactly 16 bytes")]
-    Aes128Length,
+    #[error("AES256Key expects exactly 32 bytes")]
+    Aes256Length,
 
     #[error("DevAddr expects exactly 4 bytes")]
     DevAddrLength,

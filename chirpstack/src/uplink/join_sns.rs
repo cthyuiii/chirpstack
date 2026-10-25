@@ -18,7 +18,7 @@ use crate::storage::{
 use crate::{config, devaddr::get_random_dev_addr, integration, region, stream};
 use backend::{PRStartAnsPayload, PRStartReqPayload};
 use chirpstack_api::{common, integration as integration_pb, internal, stream as stream_pb};
-use lrwn::{AES128Key, DevAddr, NetID, keys};
+use lrwn::{AES256Key, DevAddr, NetID, keys};
 
 pub struct JoinRequest {
     uplink_frame_set: UplinkFrameSet,
@@ -35,9 +35,9 @@ pub struct JoinRequest {
     device_keys: Option<device_keys::DeviceKeys>,
     device_info: Option<integration_pb::DeviceInfo>,
     dev_addr: Option<DevAddr>,
-    f_nwk_s_int_key: Option<AES128Key>,
-    s_nwk_s_int_key: Option<AES128Key>,
-    nwk_s_enc_key: Option<AES128Key>,
+    f_nwk_s_int_key: Option<AES256Key>,
+    s_nwk_s_int_key: Option<AES256Key>,
+    nwk_s_enc_key: Option<AES256Key>,
     app_s_key: Option<common::KeyEnvelope>,
     js_session_key_id: String,
 }
@@ -728,7 +728,7 @@ impl JoinRequest {
         let nwk_s_key = if ds.mac_version().to_string().starts_with("1.0") {
             Some(keywrap::wrap(
                 &kek_label,
-                AES128Key::from_slice(&ds.nwk_s_enc_key)?,
+                AES256Key::from_slice(&ds.nwk_s_enc_key)?,
             )?)
         } else {
             None
@@ -739,7 +739,7 @@ impl JoinRequest {
         } else {
             Some(keywrap::wrap(
                 &kek_label,
-                AES128Key::from_slice(&ds.f_nwk_s_int_key)?,
+                AES256Key::from_slice(&ds.f_nwk_s_int_key)?,
             )?)
         };
 

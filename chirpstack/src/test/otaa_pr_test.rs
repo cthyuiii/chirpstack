@@ -18,7 +18,7 @@ use crate::storage::{
 use crate::{config, storage::fields, test, uplink};
 use chirpstack_api::gw;
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, EUI64, EUI64Prefix, NetID};
+use lrwn::{AES256Key, EUI64, EUI64Prefix, NetID};
 
 #[tokio::test]
 async fn test_fns() {
@@ -95,7 +95,12 @@ async fn test_fns() {
         mic: None,
     };
     jr_phy
-        .set_join_request_mic(&AES128Key::from_str("01020304050607080102030405060708").unwrap())
+        .set_join_request_mic(
+            &AES256Key::from_str(
+                "0102030405060708010203040506070801020304050607080102030405060708",
+            )
+            .unwrap(),
+        )
         .unwrap();
 
     // Setup JS mock (HomeNSReq).
@@ -310,7 +315,10 @@ async fn test_sns() {
 
     let dk = device_keys::create(device_keys::DeviceKeys {
         dev_eui: dev.dev_eui,
-        nwk_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
+        nwk_key: AES256Key::from_bytes([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ]),
         dev_nonces: fields::DevNonces::default(),
         ..Default::default()
     })
@@ -396,13 +404,14 @@ async fn test_sns() {
                 ..Default::default()
             },
             phy_payload: vec![
-                32, 62, 206, 177, 148, 31, 33, 193, 200, 4, 185, 248, 156, 108, 64, 97, 1
+                32, 242, 168, 108, 6, 183, 239, 130, 80, 139, 14, 84, 253, 207, 141, 220, 212
             ],
             dev_eui: vec![2, 2, 3, 4, 5, 6, 7, 8],
             nwk_s_key: Some(backend::KeyEnvelope {
                 kek_label: "".to_string(),
                 aes_key: vec![
-                    136, 91, 1, 94, 61, 245, 54, 151, 185, 147, 143, 76, 248, 79, 192, 28
+                    150, 90, 194, 203, 101, 143, 100, 45, 72, 94, 252, 221, 216, 141, 233, 196,
+                    213, 151, 189, 175, 65, 229, 33, 83, 136, 189, 152, 45, 95, 196, 152, 177
                 ],
             }),
             f_cnt_up: Some(0),
@@ -492,7 +501,10 @@ async fn test_sns_roaming_not_allowed() {
 
     let dk = device_keys::create(device_keys::DeviceKeys {
         dev_eui: dev.dev_eui,
-        nwk_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]),
+        nwk_key: AES256Key::from_bytes([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ]),
         dev_nonces: fields::DevNonces::default(),
         ..Default::default()
     })

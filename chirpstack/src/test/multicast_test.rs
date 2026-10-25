@@ -4,7 +4,7 @@ use super::assert;
 use crate::storage::{application, device, device_profile, fields, gateway, multicast, tenant};
 use crate::{downlink, gateway::backend as gateway_backend, integration, test};
 use chirpstack_api::{gw, internal};
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 struct MulticastTest {
     name: String,
@@ -88,8 +88,14 @@ async fn test_multicast() {
         application_id: app.id,
         name: "test-mg".into(),
         mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-        mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
-        mc_app_s_key: AES128Key::from_bytes([2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+        mc_nwk_s_key: AES256Key::from_bytes([
+            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5,
+            6, 7, 8,
+        ]),
+        mc_app_s_key: AES256Key::from_bytes([
+            2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5,
+            6, 7, 8,
+        ]),
         f_cnt: 10,
         group_type: "C".into(),
         dr: 3,
@@ -122,9 +128,7 @@ async fn test_multicast() {
             assert: vec![assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: gw.gateway_id.to_string(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![
-                        96, 4, 3, 2, 1, 0, 10, 0, 5, 161, 250, 255, 42, 110, 141, 200,
-                    ],
+                    phy_payload: vec![96, 4, 3, 2, 1, 0, 10, 0, 5, 118, 21, 81, 37, 25, 246, 214],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 868300000,
@@ -171,9 +175,7 @@ async fn test_multicast() {
             assert: vec![assert::downlink_frame(gw::DownlinkFrame {
                 gateway_id: gw.gateway_id.to_string(),
                 items: vec![gw::DownlinkFrameItem {
-                    phy_payload: vec![
-                        96, 4, 3, 2, 1, 0, 10, 0, 5, 161, 250, 255, 42, 110, 141, 200,
-                    ],
+                    phy_payload: vec![96, 4, 3, 2, 1, 0, 10, 0, 5, 118, 21, 81, 37, 25, 246, 214],
                     tx_info_legacy: None,
                     tx_info: Some(gw::DownlinkTxInfo {
                         frequency: 868300000,

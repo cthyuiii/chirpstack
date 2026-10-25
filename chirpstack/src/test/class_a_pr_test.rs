@@ -17,7 +17,7 @@ use crate::storage::{
 use crate::{config, test, uplink};
 use chirpstack_api::{common, gw, internal};
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, EUI64, NetID};
+use lrwn::{AES256Key, EUI64, NetID};
 
 #[tokio::test]
 async fn test_fns_uplink() {
@@ -232,12 +232,24 @@ async fn test_sns_uplink() {
             internal::DeviceSession {
                 mac_version: common::MacVersion::Lorawan104.into(),
                 dev_addr: dev_addr.to_vec(),
-                f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                f_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                s_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                nwk_s_enc_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
                 app_s_key: Some(common::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                    aes_key: vec![
+                        16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12,
+                        11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+                    ],
                 }),
                 n_f_cnt_down: 5,
                 enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -287,8 +299,8 @@ async fn test_sns_uplink() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -341,7 +353,7 @@ async fn test_sns_uplink() {
                     transaction_id: 1234,
                     ..Default::default()
                 },
-                phy_payload: hex::decode("600000000a8005000a54972baa8b983cd1").unwrap(),
+                phy_payload: hex::decode("600000000a8005000a1d2df1d0b1b56a98").unwrap(),
                 dl_meta_data: Some(backend::DLMetaData {
                     dev_eui: dev.dev_eui.to_vec(),
                     dl_freq_1: Some(868.1),
@@ -480,12 +492,24 @@ async fn test_sns_roaming_not_allowed() {
             internal::DeviceSession {
                 mac_version: common::MacVersion::Lorawan104.into(),
                 dev_addr: dev_addr.to_vec(),
-                f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-                nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+                f_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                s_nwk_s_int_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
+                nwk_s_enc_key: vec![
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                ],
                 app_s_key: Some(common::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+                    aes_key: vec![
+                        16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12,
+                        11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+                    ],
                 }),
                 n_f_cnt_down: 5,
                 enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -526,8 +550,8 @@ async fn test_sns_roaming_not_allowed() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 

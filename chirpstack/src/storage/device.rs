@@ -373,8 +373,8 @@ pub async fn get_for_phypayload_and_incr_f_cnt_up(
 
             // Get the full 32bit frame-counter.
             let full_f_cnt = get_full_f_cnt_up(d.f_cnt_up as u32, f_cnt_orig);
-            let f_nwk_s_int_key = lrwn::AES128Key::from_slice(&ds.f_nwk_s_int_key)?;
-            let s_nwk_s_int_key = lrwn::AES128Key::from_slice(&ds.s_nwk_s_int_key)?;
+            let f_nwk_s_int_key = lrwn::AES256Key::from_slice(&ds.f_nwk_s_int_key)?;
+            let s_nwk_s_int_key = lrwn::AES256Key::from_slice(&ds.s_nwk_s_int_key)?;
 
             // Check both the full frame-counter and the received frame-counter
             // truncated to the 16LSB.
@@ -547,8 +547,8 @@ pub async fn get_for_phypayload(
 
             // Get the full 32bit frame-counter.
             let full_f_cnt = get_full_f_cnt_up(d.f_cnt_up as u32, f_cnt_orig);
-            let f_nwk_s_int_key = lrwn::AES128Key::from_slice(&ds.f_nwk_s_int_key)?;
-            let s_nwk_s_int_key = lrwn::AES128Key::from_slice(&ds.s_nwk_s_int_key)?;
+            let f_nwk_s_int_key = lrwn::AES256Key::from_slice(&ds.f_nwk_s_int_key)?;
+            let s_nwk_s_int_key = lrwn::AES256Key::from_slice(&ds.s_nwk_s_int_key)?;
 
             // Set the full f_cnt
             if let lrwn::Payload::MACPayload(pl) = &mut phy.payload {
@@ -1032,7 +1032,7 @@ pub mod test {
     use crate::storage;
     use crate::storage::device_queue;
     use crate::test;
-    use lrwn::AES128Key;
+    use lrwn::AES256Key;
 
     struct FilterTest<'a> {
         name: String,
@@ -1447,15 +1447,18 @@ pub mod test {
                         dev_addr: vec![0x01, 0x02, 0x03, 0x04],
                         s_nwk_s_int_key: vec![
                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                            0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                         ],
                         f_nwk_s_int_key: vec![
                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                            0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                         ],
                         nwk_s_enc_key: vec![
                             0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                            0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                            0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                         ],
                         skip_f_cnt_check: true,
                         ..Default::default()
@@ -1477,15 +1480,18 @@ pub mod test {
                         dev_addr: vec![0x01, 0x02, 0x03, 0x04],
                         s_nwk_s_int_key: vec![
                             0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-                            0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
                         ],
                         f_nwk_s_int_key: vec![
                             0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-                            0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
                         ],
                         nwk_s_enc_key: vec![
                             0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-                            0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                            0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
                         ],
                         ..Default::default()
                     }
@@ -1507,30 +1513,36 @@ pub mod test {
                         dev_addr: vec![0x01, 0x02, 0x03, 0x04],
                         s_nwk_s_int_key: vec![
                             0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-                            0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
                         ],
                         f_nwk_s_int_key: vec![
                             0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-                            0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
                         ],
                         nwk_s_enc_key: vec![
                             0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
-                            0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
+                            0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
                         ],
                         pending_rejoin_device_session: Some(Box::new(internal::DeviceSession {
                             region_config_id: "eu868".into(),
                             dev_addr: vec![0x04, 0x03, 0x02, 0x01],
                             s_nwk_s_int_key: vec![
                                 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-                                0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
                             ],
                             f_nwk_s_int_key: vec![
                                 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-                                0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
                             ],
                             nwk_s_enc_key: vec![
                                 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-                                0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+                                0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
                             ],
                             ..Default::default()
                         })),
@@ -1553,15 +1565,18 @@ pub mod test {
                         dev_addr: vec![0x01, 0x02, 0x03, 0x04],
                         s_nwk_s_int_key: vec![
                             0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-                            0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
                         ],
                         f_nwk_s_int_key: vec![
                             0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-                            0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
                         ],
                         nwk_s_enc_key: vec![
                             0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-                            0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+                            0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
                         ],
                         ..Default::default()
                     }
@@ -1579,8 +1594,8 @@ pub mod test {
         struct Test {
             name: String,
             dev_addr: DevAddr,
-            s_nwk_s_int_key: AES128Key,
-            f_nwk_s_int_key: AES128Key,
+            s_nwk_s_int_key: AES256Key,
+            f_nwk_s_int_key: AES256Key,
             f_cnt: u32,
             expected_retransmission: bool,
             expected_reset: bool,
@@ -1593,11 +1608,11 @@ pub mod test {
             Test {
                 name: "matching dev_eui 0101010101010101".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_slice(
+                f_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().f_nwk_s_int_key,
                 )
                 .unwrap(),
-                s_nwk_s_int_key: AES128Key::from_slice(
+                s_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().s_nwk_s_int_key,
                 )
                 .unwrap(),
@@ -1611,11 +1626,11 @@ pub mod test {
             Test {
                 name: "matching dev_eui 0202020202020202".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_slice(
+                f_nwk_s_int_key: AES256Key::from_slice(
                     &devices[1].get_device_session().unwrap().f_nwk_s_int_key,
                 )
                 .unwrap(),
-                s_nwk_s_int_key: AES128Key::from_slice(
+                s_nwk_s_int_key: AES256Key::from_slice(
                     &devices[1].get_device_session().unwrap().s_nwk_s_int_key,
                 )
                 .unwrap(),
@@ -1629,11 +1644,11 @@ pub mod test {
             Test {
                 name: "matching dev_eui 0101010101010101 with frame-counter reset".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_slice(
+                f_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().f_nwk_s_int_key,
                 )
                 .unwrap(),
-                s_nwk_s_int_key: AES128Key::from_slice(
+                s_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().s_nwk_s_int_key,
                 )
                 .unwrap(),
@@ -1647,11 +1662,11 @@ pub mod test {
             Test {
                 name: "matching dev_eui 0202020202020202 with invalid frame-counter".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_slice(
+                f_nwk_s_int_key: AES256Key::from_slice(
                     &devices[1].get_device_session().unwrap().f_nwk_s_int_key,
                 )
                 .unwrap(),
-                s_nwk_s_int_key: AES128Key::from_slice(
+                s_nwk_s_int_key: AES256Key::from_slice(
                     &devices[1].get_device_session().unwrap().s_nwk_s_int_key,
                 )
                 .unwrap(),
@@ -1663,11 +1678,11 @@ pub mod test {
             Test {
                 name: "invalid DevAddr".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x01, 0x01, 0x01]),
-                f_nwk_s_int_key: AES128Key::from_slice(
+                f_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().f_nwk_s_int_key,
                 )
                 .unwrap(),
-                s_nwk_s_int_key: AES128Key::from_slice(
+                s_nwk_s_int_key: AES256Key::from_slice(
                     &devices[0].get_device_session().unwrap().s_nwk_s_int_key,
                 )
                 .unwrap(),
@@ -1678,11 +1693,13 @@ pub mod test {
             Test {
                 name: "invalid nwk_s_key".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_bytes([
-                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                f_nwk_s_int_key: AES256Key::from_bytes([
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
                 ]),
-                s_nwk_s_int_key: AES128Key::from_bytes([
-                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                s_nwk_s_int_key: AES256Key::from_bytes([
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
                 ]),
                 f_cnt: devices[0].f_cnt_up as u32,
                 expected_error: Some("Invalid MIC".to_string()),
@@ -1691,13 +1708,15 @@ pub mod test {
             Test {
                 name: "matching pending rejoin device-session".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x04, 0x03, 0x02, 0x01]),
-                f_nwk_s_int_key: AES128Key::from_bytes([
+                f_nwk_s_int_key: AES256Key::from_bytes([
                     0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-                    0x04, 0x04, 0x04,
+                    0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+                    0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
                 ]),
-                s_nwk_s_int_key: AES128Key::from_bytes([
+                s_nwk_s_int_key: AES256Key::from_bytes([
                     0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-                    0x04, 0x04, 0x04,
+                    0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+                    0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
                 ]),
                 f_cnt: 0,
                 expected_dev_eui: devices[2].dev_eui,
@@ -1709,13 +1728,15 @@ pub mod test {
             Test {
                 name: "frame-counter rollover (16lsb)".to_string(),
                 dev_addr: DevAddr::from_be_bytes([0x01, 0x02, 0x03, 0x04]),
-                f_nwk_s_int_key: AES128Key::from_bytes([
+                f_nwk_s_int_key: AES256Key::from_bytes([
                     0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-                    0x05, 0x05, 0x05,
+                    0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+                    0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
                 ]),
-                s_nwk_s_int_key: AES128Key::from_bytes([
+                s_nwk_s_int_key: AES256Key::from_bytes([
                     0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
-                    0x05, 0x05, 0x05,
+                    0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
+                    0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
                 ]),
                 f_cnt: (1 << 16) + 11,
                 expected_dev_eui: devices[3].dev_eui,

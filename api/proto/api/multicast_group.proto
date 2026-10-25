@@ -132,10 +132,10 @@ message MulticastGroup {
   // Multicast address (HEX encoded DevAddr).
   string mc_addr = 5;
 
-  // Multicast network session key (HEX encoded AES128 key).
+  // Multicast network session key (HEX encoded AES256 key).
   string mc_nwk_s_key = 6;
 
-  // Multicast application session key (HEX encoded AES128 key).
+  // Multicast application session key (HEX encoded AES256 key).
   string mc_app_s_key = 7;
 
   // Frame-counter.

@@ -2165,12 +2165,12 @@ pub struct UpdateUplinkListReqPayload {
     pub uplink_limit: UplinkLimitPL,
     pub dev_addr: crate::DevAddr,
     pub w_fcnt: u32,
-    pub root_wor_s_key: crate::AES128Key,
+    pub root_wor_s_key: crate::AES256Key,
 }
 
 impl PayloadCodec for UpdateUplinkListReqPayload {
     fn decode(cur: &mut Cursor<Vec<u8>>) -> Result<Self> {
-        let mut b = [0; 26];
+        let mut b = [0; 42];
         cur.read_exact(&mut b)?;
 
         Ok(UpdateUplinkListReqPayload {
@@ -2186,9 +2186,9 @@ impl PayloadCodec for UpdateUplinkListReqPayload {
                 bb.copy_from_slice(&b[6..10]);
                 bb
             }),
-            root_wor_s_key: crate::AES128Key::from_bytes({
-                let mut bb = [0; 16];
-                bb.copy_from_slice(&b[10..26]);
+            root_wor_s_key: crate::AES256Key::from_bytes({
+                let mut bb = [0; 32];
+                bb.copy_from_slice(&b[10..42]);
                 bb
             }),
         })
@@ -2199,12 +2199,12 @@ impl PayloadCodec for UpdateUplinkListReqPayload {
             return Err(anyhow!("max uplink_list_idx value is 15"));
         }
 
-        let mut b = vec![0; 26];
+        let mut b = vec![0; 42];
         b[0] = self.uplink_list_idx;
         b[1] = self.uplink_limit.to_u8()?;
         b[2..6].copy_from_slice(&self.dev_addr.to_le_bytes());
         b[6..10].copy_from_slice(&self.w_fcnt.to_le_bytes());
-        b[10..26].copy_from_slice(&self.root_wor_s_key.to_bytes());
+        b[10..42].copy_from_slice(&self.root_wor_s_key.to_bytes());
         Ok(b)
     }
 }
@@ -3023,13 +3023,14 @@ mod test {
                     },
                     dev_addr: crate::DevAddr::from_be_bytes([1, 2, 3, 4]),
                     w_fcnt: 128,
-                    root_wor_s_key: crate::AES128Key::from_bytes([
-                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                    root_wor_s_key: crate::AES256Key::from_bytes([
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
                     ]),
                 }),
                 bytes: vec![
                     67, 3, 188, 4, 3, 2, 1, 128, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
-                    7, 8,
+                    7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
                 ],
             },
             MacTest {

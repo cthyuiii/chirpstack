@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
 use aes::cipher::{BlockCipherEncrypt, KeyInit, array::Array};
-use aes::{Aes128, Block};
+use aes::{Aes256, Block};
 use anyhow::Result;
 use chrono::Duration;
 use tracing::debug;
@@ -27,9 +27,9 @@ pub fn get_ping_offset(beacon_ts: Duration, dev_addr: &DevAddr, ping_nb: usize) 
     let ping_period = PING_PERIOD_BASE / ping_nb;
     let beacon_time = (beacon_ts.num_seconds() % (1 << 32)) as u32;
 
-    let key_bytes: [u8; 16] = [0x00; 16];
+    let key_bytes: [u8; 32] = [0x00; 32];
     let key = Array::from(key_bytes);
-    let cipher = Aes128::new(&key);
+    let cipher = Aes256::new(&key);
 
     let mut b: [u8; 16] = [0x00; 16];
     b[0..4].clone_from_slice(&beacon_time.to_le_bytes());
@@ -132,6 +132,7 @@ pub mod test {
     }
 
     #[test]
+    // The expected times are computed with openssl's AES-256 (all-zero key), not by this code.
     fn test_get_next_ping_slot_after() {
         struct Test {
             after: Duration,
@@ -145,32 +146,32 @@ pub mod test {
                 after: Duration::zero(),
                 dev_addr: DevAddr::from_be_bytes([0, 0, 0, 0]),
                 ping_nb: 1,
-                expected_ping_slot_ts: Duration::try_minutes(1).unwrap()
-                    + Duration::try_seconds(14).unwrap()
-                    + Duration::try_milliseconds(300).unwrap(),
+                expected_ping_slot_ts: Duration::try_seconds(47).unwrap()
+                    + Duration::try_milliseconds(120).unwrap(),
             },
             Test {
                 after: Duration::try_minutes(2).unwrap(),
                 dev_addr: DevAddr::from_be_bytes([0, 0, 0, 0]),
                 ping_nb: 1,
                 expected_ping_slot_ts: Duration::try_minutes(3).unwrap()
-                    + Duration::try_seconds(5).unwrap()
-                    + Duration::try_milliseconds(620).unwrap(),
+                    + Duration::try_seconds(2).unwrap()
+                    + Duration::try_milliseconds(830).unwrap(),
             },
             Test {
                 after: Duration::zero(),
                 dev_addr: DevAddr::from_be_bytes([0, 0, 0, 0]),
                 ping_nb: 2,
-                expected_ping_slot_ts: Duration::try_seconds(12).unwrap()
-                    + Duration::try_milliseconds(860).unwrap(),
+                expected_ping_slot_ts: Duration::try_seconds(47).unwrap()
+                    + Duration::try_milliseconds(120).unwrap(),
             },
             Test {
-                after: Duration::try_seconds(13).unwrap(),
+                // after the first of the two ping slots (47.12 s), so the second
+                after: Duration::try_seconds(48).unwrap(),
                 dev_addr: DevAddr::from_be_bytes([0, 0, 0, 0]),
                 ping_nb: 2,
                 expected_ping_slot_ts: Duration::try_minutes(1).unwrap()
-                    + Duration::try_seconds(14).unwrap()
-                    + Duration::try_milliseconds(300).unwrap(),
+                    + Duration::try_seconds(48).unwrap()
+                    + Duration::try_milliseconds(560).unwrap(),
             },
             Test {
                 after: Duration::try_seconds(124).unwrap(),
@@ -178,7 +179,7 @@ pub mod test {
                 ping_nb: 128,
                 expected_ping_slot_ts: Duration::try_minutes(2).unwrap()
                     + Duration::try_seconds(4).unwrap()
-                    + Duration::try_milliseconds(220).unwrap(),
+                    + Duration::try_milliseconds(880).unwrap(),
             },
         ];
 

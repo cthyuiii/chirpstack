@@ -10,7 +10,7 @@ use crate::storage::{
 use crate::test;
 
 use chirpstack_api::{gw, internal};
-use lrwn::{AES128Key, EUI64};
+use lrwn::{AES256Key, EUI64};
 
 #[tokio::test]
 async fn test_class_b() {
@@ -93,7 +93,7 @@ async fn test_class_b() {
         downlink_id: 1234,
         dev_eui: dev.dev_eui.to_vec(),
         device_queue_item_id: qi.id.as_bytes().to_vec(),
-        nwk_s_enc_key: AES128Key::null().to_vec(),
+        nwk_s_enc_key: AES256Key::null().to_vec(),
         downlink_frame: Some(gw::DownlinkFrame {
             downlink_id: 1234,
             gateway_id: "0807060504030201".into(),

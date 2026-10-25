@@ -11,7 +11,7 @@ use crate::storage::{
 use crate::{gateway::backend as gateway_backend, integration, test, uplink};
 use chirpstack_api::{common, gw, integration as integration_pb, internal};
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 struct Test {
     name: String,
@@ -129,12 +129,24 @@ async fn test_lorawan_10() {
     let ds_relay = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![1, 1, 1, 1],
-        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 1,
+            ],
         }),
         n_f_cnt_down: 5,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -147,12 +159,24 @@ async fn test_lorawan_10() {
     let ds_relay_ed = internal::DeviceSession {
         mac_version: common::MacVersion::Lorawan104.into(),
         dev_addr: vec![2, 2, 2, 2],
-        f_nwk_s_int_key: vec![2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        s_nwk_s_int_key: vec![2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        nwk_s_enc_key: vec![2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        f_nwk_s_int_key: vec![
+            2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        s_nwk_s_int_key: vec![
+            2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
+        nwk_s_enc_key: vec![
+            2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+            11, 12, 13, 14, 15, 16,
+        ],
         app_s_key: Some(common::KeyEnvelope {
             kek_label: "".into(),
-            aes_key: vec![16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2],
+            aes_key: vec![
+                16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 16, 15, 14, 13, 12, 11, 10,
+                9, 8, 7, 6, 5, 4, 3, 2, 2,
+            ],
         }),
         n_f_cnt_down: 55,
         enabled_uplink_channel_indices: vec![0, 1, 2],
@@ -180,7 +204,7 @@ async fn test_lorawan_10() {
     };
     phy_relay_ed_unconfirmed_up
         .encrypt_frm_payload(
-            &AES128Key::from_slice(&ds_relay_ed.app_s_key.as_ref().unwrap().aes_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.app_s_key.as_ref().unwrap().aes_key).unwrap(),
         )
         .unwrap();
     phy_relay_ed_unconfirmed_up
@@ -189,8 +213,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay_ed.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -212,7 +236,7 @@ async fn test_lorawan_10() {
     };
     phy_relay_ed_confirmed_up
         .encrypt_frm_payload(
-            &AES128Key::from_slice(&ds_relay_ed.app_s_key.as_ref().unwrap().aes_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.app_s_key.as_ref().unwrap().aes_key).unwrap(),
         )
         .unwrap();
     phy_relay_ed_confirmed_up
@@ -221,8 +245,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay_ed.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -252,7 +276,7 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_unconfirmed_up
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_unconfirmed_up
         .set_uplink_data_mic(
@@ -260,8 +284,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -295,7 +319,7 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_unconfirmed_up_adr_ack_req
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_unconfirmed_up_adr_ack_req
         .set_uplink_data_mic(
@@ -303,8 +327,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -334,7 +358,7 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_confirmed_up
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_confirmed_up
         .set_uplink_data_mic(
@@ -342,8 +366,8 @@ async fn test_lorawan_10() {
             0,
             0,
             0,
-            &AES128Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.f_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -372,7 +396,7 @@ async fn test_lorawan_10() {
         .set_downlink_data_mic(
             lrwn::MACVersion::LoRaWAN1_0,
             0,
-            &AES128Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay_ed.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -401,13 +425,13 @@ async fn test_lorawan_10() {
         mic: None,
     };
     phy_relay_unconfirmed_down_ack
-        .encrypt_frm_payload(&AES128Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
+        .encrypt_frm_payload(&AES256Key::from_slice(&ds_relay.nwk_s_enc_key).unwrap())
         .unwrap();
     phy_relay_unconfirmed_down_ack
         .set_downlink_data_mic(
             lrwn::MACVersion::LoRaWAN1_0,
             0,
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 
@@ -435,7 +459,7 @@ async fn test_lorawan_10() {
         .set_downlink_data_mic(
             lrwn::MACVersion::LoRaWAN1_0,
             0,
-            &AES128Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
+            &AES256Key::from_slice(&ds_relay.s_nwk_s_int_key).unwrap(),
         )
         .unwrap();
 

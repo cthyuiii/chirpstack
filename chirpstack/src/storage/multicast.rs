@@ -6,7 +6,7 @@ use tracing::info;
 use uuid::Uuid;
 
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 use super::error::Error;
 use super::schema::{
@@ -27,8 +27,8 @@ pub struct MulticastGroup {
     pub name: String,
     pub region: CommonName,
     pub mc_addr: DevAddr,
-    pub mc_nwk_s_key: AES128Key,
-    pub mc_app_s_key: AES128Key,
+    pub mc_nwk_s_key: AES256Key,
+    pub mc_app_s_key: AES256Key,
     pub f_cnt: i64,
     pub group_type: String,
     pub dr: i16,
@@ -58,8 +58,8 @@ impl Default for MulticastGroup {
             name: "".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::default(),
-            mc_nwk_s_key: AES128Key::default(),
-            mc_app_s_key: AES128Key::default(),
+            mc_nwk_s_key: AES256Key::default(),
+            mc_app_s_key: AES256Key::default(),
             f_cnt: 0,
             group_type: "".into(),
             dr: 0,
@@ -768,8 +768,14 @@ pub mod test {
             name: "test-mg".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-            mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
-            mc_app_s_key: AES128Key::from_bytes([2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+            mc_nwk_s_key: AES256Key::from_bytes([
+                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
+            mc_app_s_key: AES256Key::from_bytes([
+                2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 2, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
             f_cnt: 10,
             group_type: "C".into(),
             dr: 1,
@@ -978,7 +984,10 @@ pub mod test {
             name: "test-mg".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-            mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+            mc_nwk_s_key: AES256Key::from_bytes([
+                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
             f_cnt: 10,
             group_type: "C".into(),
             dr: 1,
@@ -1036,7 +1045,10 @@ pub mod test {
             name: "test-mg".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-            mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+            mc_nwk_s_key: AES256Key::from_bytes([
+                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
             f_cnt: 10,
             group_type: "C".into(),
             dr: 1,
@@ -1096,7 +1108,10 @@ pub mod test {
             name: "test-mg".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-            mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+            mc_nwk_s_key: AES256Key::from_bytes([
+                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
             f_cnt: 10,
             group_type: "C".into(),
             dr: 1,
@@ -1263,7 +1278,10 @@ pub mod test {
             name: "test-mg".into(),
             region: CommonName::EU868,
             mc_addr: DevAddr::from_be_bytes([1, 2, 3, 4]),
-            mc_nwk_s_key: AES128Key::from_bytes([1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8]),
+            mc_nwk_s_key: AES256Key::from_bytes([
+                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4,
+                5, 6, 7, 8,
+            ]),
             f_cnt: 10,
             group_type: "C".into(),
             dr: 1,

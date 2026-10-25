@@ -7,3 +7,4 @@ lrwn/target
 lrwn/filters/target
 **/node_modules
 Dockerfile
+/target

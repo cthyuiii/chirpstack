@@ -138,11 +138,17 @@ async fn test_js() {
                 phy_payload: phy_ja.to_vec().unwrap(),
                 app_s_key: Some(backend::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                    aes_key: vec![
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
+                    ],
                 }),
                 nwk_s_key: Some(backend::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                    aes_key: vec![
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
+                    ],
                 }),
                 ..Default::default()
             },
@@ -152,12 +158,24 @@ async fn test_js() {
                     internal::DeviceSession {
                         dev_addr: vec![1, 2, 3, 4],
                         mac_version: common::MacVersion::Lorawan103.into(),
-                        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                        f_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        s_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        nwk_s_enc_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
                         app_s_key: Some(common::KeyEnvelope {
                             kek_label: "".into(),
-                            aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                            aes_key: vec![
+                                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
+                                7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            ],
                         }),
                         rx1_delay: 1,
                         rx2_frequency: 869525000,
@@ -209,7 +227,10 @@ async fn test_js() {
                 session_key_id: vec![1, 2, 3, 4],
                 nwk_s_key: Some(backend::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                    aes_key: vec![
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
+                    ],
                 }),
                 ..Default::default()
             },
@@ -219,9 +240,18 @@ async fn test_js() {
                     internal::DeviceSession {
                         dev_addr: vec![1, 2, 3, 4],
                         mac_version: common::MacVersion::Lorawan103.into(),
-                        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                        f_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        s_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        nwk_s_enc_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
                         js_session_key_id: vec![1, 2, 3, 4],
                         rx1_delay: 1,
                         rx2_frequency: 869525000,
@@ -275,11 +305,17 @@ async fn test_js() {
                 phy_payload: phy_ja.to_vec().unwrap(),
                 app_s_key: Some(backend::KeyEnvelope {
                     kek_label: "kek-label".into(),
-                    aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                    aes_key: vec![
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
+                    ],
                 }),
                 nwk_s_key: Some(backend::KeyEnvelope {
                     kek_label: "".into(),
-                    aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                    aes_key: vec![
+                        1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1,
+                        2, 3, 4, 5, 6, 7, 8,
+                    ],
                 }),
                 ..Default::default()
             },
@@ -289,12 +325,24 @@ async fn test_js() {
                     internal::DeviceSession {
                         dev_addr: vec![1, 2, 3, 4],
                         mac_version: common::MacVersion::Lorawan103.into(),
-                        f_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        s_nwk_s_int_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
-                        nwk_s_enc_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                        f_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        s_nwk_s_int_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
+                        nwk_s_enc_key: vec![
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
+                        ],
                         app_s_key: Some(common::KeyEnvelope {
                             kek_label: "kek-label".into(),
-                            aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                            aes_key: vec![
+                                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
+                                7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            ],
                         }),
                         rx1_delay: 1,
                         rx2_frequency: 869525000,
@@ -321,7 +369,10 @@ async fn test_js() {
                     join_server_context: Some(common::JoinServerContext {
                         app_s_key: Some(common::KeyEnvelope {
                             kek_label: "kek-label".into(),
-                            aes_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                            aes_key: vec![
+                                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
+                                7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            ],
                         }),
                         ..Default::default()
                     }),

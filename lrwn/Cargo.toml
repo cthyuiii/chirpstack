@@ -23,6 +23,7 @@
   # Crypto
   cmac = { workspace = true, optional = true }
   aes = { workspace = true, optional = true }
+  subtle = { workspace = true, optional = true }
 
   # Database
   diesel = { workspace = true, optional = true }
@@ -34,6 +35,6 @@
   postgres = ["diesel", "diesel/postgres_backend"]
   sqlite = ["diesel", "diesel/sqlite"]
   serde = ["dep:serde"]
-  crypto = ["dep:cmac", "dep:aes"]
+  crypto = ["dep:cmac", "dep:aes", "dep:subtle"]
   regions = []
   applayer = []

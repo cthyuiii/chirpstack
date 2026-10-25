@@ -4,7 +4,7 @@ extern crate diesel;
 #[macro_use]
 extern crate anyhow;
 
-pub use self::aes128::*;
+pub use self::aes256::*;
 pub use self::cflist::*;
 pub use self::devaddr::*;
 pub use self::dl_settings::*;
@@ -18,7 +18,7 @@ pub use self::payload::*;
 pub use self::phy_payload::*;
 pub use self::relay::*;
 
-mod aes128;
+mod aes256;
 #[cfg(feature = "applayer")]
 pub mod applayer;
 mod cflist;

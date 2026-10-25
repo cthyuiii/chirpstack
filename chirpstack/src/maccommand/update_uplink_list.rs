@@ -76,7 +76,10 @@ pub mod test {
                             dev_addr: vec![1, 2, 3, 4],
                             dev_eui: vec![1, 2, 3, 4, 5, 6, 7, 8],
                             join_eui: vec![1, 2, 3, 4, 5, 6, 7, 8],
-                            root_wor_s_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                            root_wor_s_key: vec![
+                                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
+                                7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            ],
                             provisioned: false,
                             uplink_limit_bucket_size: 2,
                             uplink_limit_reload_rate: 1,
@@ -95,8 +98,9 @@ pub mod test {
                         },
                         w_fcnt: 0,
                         dev_addr: lrwn::DevAddr::from_be_bytes([1, 2, 3, 4]),
-                        root_wor_s_key: lrwn::AES128Key::from_bytes([
-                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                        root_wor_s_key: lrwn::AES256Key::from_bytes([
+                            1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            1, 2, 3, 4, 5, 6, 7, 8,
                         ]),
                     }),
                 ])),
@@ -110,7 +114,10 @@ pub mod test {
                             dev_addr: vec![1, 2, 3, 4],
                             dev_eui: vec![1, 2, 3, 4, 5, 6, 7, 8],
                             join_eui: vec![1, 2, 3, 4, 5, 6, 7, 8],
-                            root_wor_s_key: vec![1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8],
+                            root_wor_s_key: vec![
+                                1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6,
+                                7, 8, 1, 2, 3, 4, 5, 6, 7, 8,
+                            ],
                             provisioned: true,
                             uplink_limit_bucket_size: 2,
                             uplink_limit_reload_rate: 1,

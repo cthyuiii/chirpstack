@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::Read;
 use std::time::Duration;
 
-use aes_kw::{KeyInit, KwAes128};
+use aes_kw::{KeyInit, KwAes256};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, HeaderMap};
@@ -607,7 +607,7 @@ pub struct KeyEnvelope {
 }
 
 impl KeyEnvelope {
-    pub fn new(label: &str, kek: Option<&[u8; 16]>, key: &[u8; 16]) -> Result<Self> {
+    pub fn new(label: &str, kek: Option<&[u8; 32]>, key: &[u8; 32]) -> Result<Self> {
         if label.is_empty() || kek.is_none() {
             return Ok(KeyEnvelope {
                 kek_label: "".into(),
@@ -615,8 +615,8 @@ impl KeyEnvelope {
             });
         }
 
-        let kek = KwAes128::new(kek.unwrap().into());
-        let mut cipher: Vec<u8> = vec![0; 16 + 8];
+        let kek = KwAes256::new(kek.unwrap().into());
+        let mut cipher: Vec<u8> = vec![0; 32 + 8];
         kek.wrap_key(key, &mut cipher)
             .map_err(|e| anyhow!("KEK wrap failed: {}", e))?;
 
@@ -626,9 +626,9 @@ impl KeyEnvelope {
         })
     }
 
-    pub fn unwrap(&self, kek: &[u8; 16]) -> Result<[u8; 16]> {
-        let kek = KwAes128::new(kek.into());
-        let mut out: [u8; 16] = [0; 16];
+    pub fn unwrap(&self, kek: &[u8; 32]) -> Result<[u8; 32]> {
+        let kek = KwAes256::new(kek.into());
+        let mut out: [u8; 32] = [0; 32];
         kek.unwrap_key(&self.aes_key, &mut out)
             .map_err(|e| anyhow!("KEK unwrap failed: {}", e))?;
         Ok(out)
@@ -1211,8 +1211,17 @@ pub mod test {
 
     #[test]
     fn test_key_envelope() {
-        let key: [u8; 16] = [1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8];
-        let kek: [u8; 16] = [8, 7, 6, 5, 4, 3, 2, 1, 8, 7, 6, 5, 4, 3, 2, 1];
+        // RFC 3394 4.6: 256 bits of key data wrapped with a 256-bit KEK
+        let key: [u8; 32] = [
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd,
+            0xee, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+            0x0c, 0x0d, 0x0e, 0x0f,
+        ];
+        let kek: [u8; 32] = [
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+            0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
+            0x1c, 0x1d, 0x1e, 0x1f,
+        ];
 
         // no wrapping
         let ke = KeyEnvelope::new("", None, &key).unwrap();
@@ -1223,8 +1232,9 @@ pub mod test {
         let ke = KeyEnvelope::new("test-kek", Some(&kek), &key).unwrap();
         assert_eq!(
             vec![
-                0xe3, 0xd5, 0xa4, 0x7b, 0xa2, 0x5c, 0xbe, 0x6e, 0x5d, 0xa8, 0x20, 0x84, 0x6e, 0xc,
-                0xb6, 0xa8, 0x2b, 0x75, 0xc, 0x59, 0xd8, 0x48, 0xec, 0x7a
+                0x28, 0xc9, 0xf4, 0x04, 0xc4, 0xb8, 0x10, 0xf4, 0xcb, 0xcc, 0xb3, 0x5c, 0xfb, 0x87,
+                0xf8, 0x26, 0x3f, 0x57, 0x86, 0xe2, 0xd8, 0x0e, 0xd3, 0x26, 0xcb, 0xc7, 0xf0, 0xe7,
+                0x1a, 0x99, 0xf4, 0x3b, 0xfb, 0x98, 0x8b, 0x9b, 0x7a, 0x02, 0xdd, 0x21
             ],
             ke.aes_key
         );

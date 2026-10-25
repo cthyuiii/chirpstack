@@ -1,13 +1,10 @@
 #[cfg(feature = "crypto")]
-use aes::{
-    Aes128, Block,
-    cipher::{BlockCipherEncrypt, KeyInit, array::Array},
-};
+use aes::{Aes256, cipher::KeyInit};
 use anyhow::Result;
 #[cfg(feature = "crypto")]
 use cmac::{Cmac, Mac};
 
-use crate::AES128Key;
+use crate::AES256Key;
 use crate::applayer::PayloadCodec;
 
 pub enum Cid {
@@ -664,21 +661,14 @@ fn matrix_line(n: usize, m: usize) -> Vec<usize> {
     line
 }
 
-pub fn get_data_block_int_key(app_key: AES128Key) -> Result<AES128Key> {
+pub fn get_data_block_int_key(app_key: AES256Key) -> Result<AES256Key> {
     let b: [u8; 16] = [0x30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-    let key_bytes = app_key.to_bytes();
-    let key = Array::from(key_bytes);
-    let cipher = Aes128::new(&key);
-
-    let mut block = Block::from(b);
-    cipher.encrypt_block(&mut block);
-
-    Ok(AES128Key::from_slice(&block)?)
+    Ok(crate::keys::kdf(&app_key, &b))
 }
 
 pub fn calculate_mic(
-    data_block_int_key: AES128Key,
+    data_block_int_key: AES256Key,
     session_cnt: u16,
     frag_index: u8,
     descriptor: [u8; 4],
@@ -691,7 +681,7 @@ pub fn calculate_mic(
     b0[4..8].clone_from_slice(&descriptor);
     b0[12..16].clone_from_slice(&(data.len() as u32).to_le_bytes());
 
-    let mut mac = Cmac::<Aes128>::new_from_slice(&data_block_int_key.to_bytes()).unwrap();
+    let mut mac = Cmac::<Aes256>::new_from_slice(&data_block_int_key.to_bytes()).unwrap();
     mac.update(&b0);
     mac.update(data);
 

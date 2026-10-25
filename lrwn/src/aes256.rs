@@ -19,29 +19,29 @@ use crate::Error;
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "diesel", derive(AsExpression, FromSqlRow))]
 #[cfg_attr(feature = "diesel", diesel(sql_type = diesel::sql_types::Binary))]
-pub struct AES128Key([u8; 16]);
+pub struct AES256Key([u8; 32]);
 
-impl AES128Key {
+impl AES256Key {
     pub fn null() -> Self {
-        AES128Key([0; 16])
+        AES256Key([0; 32])
     }
 
     pub fn from_slice(b: &[u8]) -> Result<Self, Error> {
-        if b.len() != 16 {
-            return Err(Error::Aes128Length);
+        if b.len() != 32 {
+            return Err(Error::Aes256Length);
         }
 
-        let mut bb: [u8; 16] = [0; 16];
+        let mut bb: [u8; 32] = [0; 32];
         bb.copy_from_slice(b);
 
-        Ok(AES128Key(bb))
+        Ok(AES256Key(bb))
     }
 
-    pub fn from_bytes(b: [u8; 16]) -> Self {
-        AES128Key(b)
+    pub fn from_bytes(b: [u8; 32]) -> Self {
+        AES256Key(b)
     }
 
-    pub fn to_bytes(&self) -> [u8; 16] {
+    pub fn to_bytes(&self) -> [u8; 32] {
         self.0
     }
 
@@ -50,31 +50,31 @@ impl AES128Key {
     }
 }
 
-impl fmt::Display for AES128Key {
+impl fmt::Display for AES256Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
 }
 
-impl fmt::Debug for AES128Key {
+impl fmt::Debug for AES256Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.0))
     }
 }
 
-impl FromStr for AES128Key {
+impl FromStr for AES256Key {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut bytes: [u8; 16] = [0; 16];
+        let mut bytes: [u8; 32] = [0; 32];
         if !s.is_empty() {
             hex::decode_to_slice(s, &mut bytes)?;
         }
-        Ok(AES128Key(bytes))
+        Ok(AES256Key(bytes))
     }
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for AES128Key {
+impl Serialize for AES256Key {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -84,71 +84,71 @@ impl Serialize for AES128Key {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for AES128Key {
-    fn deserialize<D>(deserialize: D) -> Result<AES128Key, D::Error>
+impl<'de> Deserialize<'de> for AES256Key {
+    fn deserialize<D>(deserialize: D) -> Result<AES256Key, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserialize.deserialize_str(Aes128KeyVisitor)
+        deserialize.deserialize_str(Aes256KeyVisitor)
     }
 }
 
 #[cfg(feature = "serde")]
-struct Aes128KeyVisitor;
+struct Aes256KeyVisitor;
 
 #[cfg(feature = "serde")]
-impl Visitor<'_> for Aes128KeyVisitor {
-    type Value = AES128Key;
+impl Visitor<'_> for Aes256KeyVisitor {
+    type Value = AES256Key;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("A hex encoded AES key of 128 bit is expected")
+        formatter.write_str("A hex encoded AES key of 256 bit is expected")
     }
 
     fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        AES128Key::from_str(value).map_err(|e| E::custom(format!("{}", e)))
+        AES256Key::from_str(value).map_err(|e| E::custom(format!("{}", e)))
     }
 }
 
 #[cfg(feature = "postgres")]
-impl deserialize::FromSql<Binary, Pg> for AES128Key {
+impl deserialize::FromSql<Binary, Pg> for AES256Key {
     fn from_sql(bytes: <Pg as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         let value = <Vec<u8> as deserialize::FromSql<Binary, Pg>>::from_sql(bytes)?;
-        if value.len() != 16 {
-            return Err("AES128Key type expects exactly 16 bytes".into());
+        if value.len() != 32 {
+            return Err("AES256Key type expects exactly 32 bytes".into());
         }
 
-        let mut b = [0u8; 16];
+        let mut b = [0u8; 32];
         b.copy_from_slice(&value);
-        Ok(AES128Key(b))
+        Ok(AES256Key(b))
     }
 }
 
 #[cfg(feature = "postgres")]
-impl serialize::ToSql<Binary, Pg> for AES128Key {
+impl serialize::ToSql<Binary, Pg> for AES256Key {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, Pg>) -> serialize::Result {
         <[u8] as serialize::ToSql<Binary, Pg>>::to_sql(&self.to_bytes(), &mut out.reborrow())
     }
 }
 
 #[cfg(feature = "sqlite")]
-impl deserialize::FromSql<Binary, Sqlite> for AES128Key {
+impl deserialize::FromSql<Binary, Sqlite> for AES256Key {
     fn from_sql(bytes: <Sqlite as Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         let value = <Vec<u8> as deserialize::FromSql<Binary, Sqlite>>::from_sql(bytes)?;
-        if value.len() != 16 {
-            return Err("AES128Key type expects exactly 16 bytes".into());
+        if value.len() != 32 {
+            return Err("AES256Key type expects exactly 32 bytes".into());
         }
 
-        let mut b = [0u8; 16];
+        let mut b = [0u8; 32];
         b.copy_from_slice(&value);
-        Ok(AES128Key(b))
+        Ok(AES256Key(b))
     }
 }
 
 #[cfg(feature = "sqlite")]
-impl serialize::ToSql<Binary, Sqlite> for AES128Key {
+impl serialize::ToSql<Binary, Sqlite> for AES256Key {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, Sqlite>) -> serialize::Result {
         out.set_value(self.to_bytes().to_vec());
         Ok(serialize::IsNull::No)
@@ -161,22 +161,30 @@ mod tests {
 
     #[test]
     fn test_to_string() {
-        let key = AES128Key::from_bytes([
+        let key = AES256Key::from_bytes([
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-            0x07, 0x08,
+            0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04,
+            0x05, 0x06, 0x07, 0x08,
         ]);
-        assert_eq!("01020304050607080102030405060708", key.to_string());
+        assert_eq!(
+            "0102030405060708010203040506070801020304050607080102030405060708",
+            key.to_string()
+        );
     }
 
     #[test]
     fn test_from_str() {
-        let key = AES128Key::from_bytes([
+        let key = AES256Key::from_bytes([
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
-            0x07, 0x08,
+            0x07, 0x08, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x02, 0x03, 0x04,
+            0x05, 0x06, 0x07, 0x08,
         ]);
         assert_eq!(
             key,
-            AES128Key::from_str("01020304050607080102030405060708").unwrap()
+            AES256Key::from_str("0102030405060708010203040506070801020304050607080102030405060708")
+                .unwrap()
         );
+        // a 16-byte (AES-128) key is refused
+        assert!(AES256Key::from_str("01020304050607080102030405060708").is_err());
     }
 }

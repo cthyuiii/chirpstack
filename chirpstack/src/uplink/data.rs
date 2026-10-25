@@ -22,7 +22,7 @@ use crate::storage::{
 };
 use crate::{codec, config, downlink, integration, maccommand, region, stream};
 use chirpstack_api::{common, integration as integration_pb, internal, stream as stream_pb};
-use lrwn::{AES128Key, EUI64};
+use lrwn::{AES256Key, EUI64};
 
 pub struct Data {
     uplink_frame_set: UplinkFrameSet,
@@ -578,7 +578,7 @@ impl Data {
                 warn!(error = %e.full(), "Decoding f_opts mac-commands failed");
             }
         } else {
-            let nwk_s_enc_key = AES128Key::from_slice(&ds.nwk_s_enc_key)?;
+            let nwk_s_enc_key = AES256Key::from_slice(&ds.nwk_s_enc_key)?;
             if let Err(e) = self.phy_payload.decrypt_f_opts(&nwk_s_enc_key) {
                 // This avoids failing in case of a corrupted mac-command in the frm_payload.
                 warn!(error = %e.full(), "Decrypting f_opts mac-commands failed");
@@ -599,7 +599,7 @@ impl Data {
 
         // Mac-commands (f_port=0) or Relay payload (f_port=226).
         if f_port == 0 || f_port == lrwn::LA_FPORT_RELAY {
-            let nwk_s_enc_key = AES128Key::from_slice(&ds.nwk_s_enc_key)?;
+            let nwk_s_enc_key = AES256Key::from_slice(&ds.nwk_s_enc_key)?;
             if let Err(e) = self.phy_payload.decrypt_frm_payload(&nwk_s_enc_key) {
                 // This avoids failing in case of a corrupted mac-command in the frm_payload.
                 warn!(error = %e.full(), "Decrypting frm_payload failed");
@@ -607,7 +607,7 @@ impl Data {
         } else if !self._is_end_to_end_encrypted()
             && let Some(app_s_key) = &ds.app_s_key
         {
-            let app_s_key = AES128Key::from_slice(&app_s_key.aes_key)?;
+            let app_s_key = AES256Key::from_slice(&app_s_key.aes_key)?;
             self.phy_payload.decrypt_frm_payload(&app_s_key)?;
         }
 

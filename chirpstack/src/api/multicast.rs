@@ -4,7 +4,7 @@ use std::str::FromStr;
 use chirpstack_api::api;
 use chirpstack_api::api::multicast_group_service_server::MulticastGroupService;
 use chirpstack_api::tonic::{self, Request, Response, Status};
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 use uuid::Uuid;
 
 use super::auth::validator;
@@ -54,8 +54,8 @@ impl MulticastGroupService for MulticastGroup {
             name: req_mg.name.clone(),
             region: req_mg.region().from_proto(),
             mc_addr: DevAddr::from_str(&req_mg.mc_addr).map_err(|e| e.status())?,
-            mc_nwk_s_key: AES128Key::from_str(&req_mg.mc_nwk_s_key).map_err(|e| e.status())?,
-            mc_app_s_key: AES128Key::from_str(&req_mg.mc_app_s_key).map_err(|e| e.status())?,
+            mc_nwk_s_key: AES256Key::from_str(&req_mg.mc_nwk_s_key).map_err(|e| e.status())?,
+            mc_app_s_key: AES256Key::from_str(&req_mg.mc_app_s_key).map_err(|e| e.status())?,
             f_cnt: req_mg.f_cnt as i64,
             group_type: match req_mg.group_type() {
                 api::MulticastGroupType::ClassB => "B",
@@ -153,8 +153,8 @@ impl MulticastGroupService for MulticastGroup {
             name: req_mg.name.clone(),
             region: req_mg.region().from_proto(),
             mc_addr: DevAddr::from_str(&req_mg.mc_addr).map_err(|e| e.status())?,
-            mc_nwk_s_key: AES128Key::from_str(&req_mg.mc_nwk_s_key).map_err(|e| e.status())?,
-            mc_app_s_key: AES128Key::from_str(&req_mg.mc_app_s_key).map_err(|e| e.status())?,
+            mc_nwk_s_key: AES256Key::from_str(&req_mg.mc_nwk_s_key).map_err(|e| e.status())?,
+            mc_app_s_key: AES256Key::from_str(&req_mg.mc_app_s_key).map_err(|e| e.status())?,
             f_cnt: req_mg.f_cnt as i64,
             group_type: match req_mg.group_type() {
                 api::MulticastGroupType::ClassB => "B",
@@ -611,8 +611,10 @@ pub mod test {
                     application_id: app.id.to_string(),
                     region: common::Region::Eu868.into(),
                     mc_addr: "01020304".into(),
-                    mc_nwk_s_key: "01020304050607080102030405060708".into(),
-                    mc_app_s_key: "02020304050607080102030405060708".into(),
+                    mc_nwk_s_key:
+                        "0102030405060708010203040506070801020304050607080102030405060708".into(),
+                    mc_app_s_key:
+                        "0202030405060708010203040506070802020304050607080102030405060708".into(),
                     f_cnt: 20,
                     group_type: api::MulticastGroupType::ClassC.into(),
                     dr: 3,
@@ -641,8 +643,10 @@ pub mod test {
                 application_id: app.id.to_string(),
                 region: common::Region::Eu868.into(),
                 mc_addr: "01020304".into(),
-                mc_nwk_s_key: "01020304050607080102030405060708".into(),
-                mc_app_s_key: "02020304050607080102030405060708".into(),
+                mc_nwk_s_key: "0102030405060708010203040506070801020304050607080102030405060708"
+                    .into(),
+                mc_app_s_key: "0202030405060708010203040506070802020304050607080102030405060708"
+                    .into(),
                 f_cnt: 20,
                 group_type: api::MulticastGroupType::ClassC.into(),
                 dr: 3,
@@ -663,8 +667,10 @@ pub mod test {
                     application_id: app.id.to_string(),
                     region: common::Region::Eu868.into(),
                     mc_addr: "02020304".into(),
-                    mc_nwk_s_key: "02020304050607080102030405060708".into(),
-                    mc_app_s_key: "03020304050607080102030405060708".into(),
+                    mc_nwk_s_key:
+                        "0202030405060708010203040506070802020304050607080102030405060708".into(),
+                    mc_app_s_key:
+                        "0302030405060708010203040506070803020304050607080102030405060708".into(),
                     f_cnt: 30,
                     group_type: api::MulticastGroupType::ClassB.into(),
                     dr: 2,
@@ -691,8 +697,10 @@ pub mod test {
                 application_id: app.id.to_string(),
                 region: common::Region::Eu868.into(),
                 mc_addr: "02020304".into(),
-                mc_nwk_s_key: "02020304050607080102030405060708".into(),
-                mc_app_s_key: "03020304050607080102030405060708".into(),
+                mc_nwk_s_key: "0202030405060708010203040506070802020304050607080102030405060708"
+                    .into(),
+                mc_app_s_key: "0302030405060708010203040506070803020304050607080102030405060708"
+                    .into(),
                 f_cnt: 30,
                 group_type: api::MulticastGroupType::ClassB.into(),
                 dr: 2,

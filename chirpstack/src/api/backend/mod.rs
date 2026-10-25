@@ -37,7 +37,7 @@ use crate::{config, region, stream};
 use backend::{BasePayload, BasePayloadResultProvider, MessageType};
 use chirpstack_api::stream as stream_pb;
 use lrwn::region::CommonName;
-use lrwn::{AES128Key, EUI64, NetID};
+use lrwn::{AES256Key, EUI64, NetID};
 
 pub async fn setup() -> Result<()> {
     let conf = config::get();
@@ -334,7 +334,7 @@ async fn _handle_pr_start_req_data(
     let nwk_s_key = if validate_mic && ds.mac_version().to_string().starts_with("1.0") {
         Some(keywrap::wrap(
             &kek_label,
-            AES128Key::from_slice(&ds.nwk_s_enc_key)?,
+            AES256Key::from_slice(&ds.nwk_s_enc_key)?,
         )?)
     } else {
         None
@@ -344,7 +344,7 @@ async fn _handle_pr_start_req_data(
     let f_nwk_s_int_key = if validate_mic && ds.mac_version().to_string().starts_with("1.1") {
         Some(keywrap::wrap(
             &kek_label,
-            AES128Key::from_slice(&ds.f_nwk_s_int_key)?,
+            AES256Key::from_slice(&ds.f_nwk_s_int_key)?,
         )?)
     } else {
         None

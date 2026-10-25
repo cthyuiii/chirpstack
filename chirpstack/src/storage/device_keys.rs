@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use diesel_async::{AsyncConnection, RunQueryDsl};
 use tracing::info;
 
-use lrwn::{AES128Key, EUI64};
+use lrwn::{AES256Key, EUI64};
 
 use super::error::Error;
 use super::schema::device_keys;
@@ -16,11 +16,11 @@ pub struct DeviceKeys {
     pub dev_eui: EUI64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub nwk_key: AES128Key,
-    pub app_key: AES128Key,
+    pub nwk_key: AES256Key,
+    pub app_key: AES256Key,
     pub dev_nonces: fields::DevNonces,
     pub join_nonce: i32,
-    pub gen_app_key: AES128Key,
+    pub gen_app_key: AES256Key,
 }
 
 impl Default for DeviceKeys {

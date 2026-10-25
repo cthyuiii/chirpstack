@@ -11,7 +11,7 @@ use super::error::Error;
 use super::{get_async_redis_conn, redis_key};
 use crate::config;
 use chirpstack_api::internal;
-use lrwn::{AES128Key, DevAddr, EUI64};
+use lrwn::{AES256Key, DevAddr, EUI64};
 
 pub async fn save(ds: &internal::PassiveRoamingDeviceSession) -> Result<()> {
     let sess_id = Uuid::from_slice(&ds.session_id)?;
@@ -139,7 +139,7 @@ pub async fn get_for_phy_payload(
             continue;
         }
 
-        let f_nwk_s_int_key = AES128Key::from_slice(&ds.f_nwk_s_int_key)?;
+        let f_nwk_s_int_key = AES256Key::from_slice(&ds.f_nwk_s_int_key)?;
 
         // Set the full frame-counter.
         if let lrwn::Payload::MACPayload(pl) = &mut phy.payload {
